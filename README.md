@@ -58,6 +58,12 @@ New ideas go through [docs/IDEA_BACKLOG.md](docs/IDEA_BACKLOG.md). Each module f
 run, your-tool mapping, scheduling, governance checklist, verification, troubleshooting, and an honest status of
 which steps were really run.
 
+## Not technical? Start here
+
+No coding needed: [docs/FOR_NON_TECHNICAL_USERS.md](docs/FOR_NON_TECHNICAL_USERS.md) explains the toolkit in plain words, how to try it in your browser with GitHub Codespaces (nothing to install), how to read the report, and a glossary.
+
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/bharamprashant/pm-ai-toolkit)
+
 ## Quick start (about 5 minutes, no accounts)
 
 ```bash
