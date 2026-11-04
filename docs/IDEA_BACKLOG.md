@@ -12,7 +12,7 @@ Status: idea -> scoped -> building -> built (offline measured) -> live-tested.
 | 04 | Backlog refinement assistant | agent | human-review acceptance rate | idea |
 | 05 | Audit evidence & control mapping | agent | retrieval with cited sources | idea |
 | 06 | AI vendor / model evaluation harness | eval | model selection, guardrail metrics | idea |
-| 07 | Agentic PMO orchestrator | multi-agent | dependency graph, agent contracts, audit log | idea |
+| 07 | Agentic PMO orchestrator | multi-agent | dependency graph, agent contracts, audit log | scoped: Jira plan generated (31 stories, 5 sprints); not built |
 | G1 | AI governance pack (policy, RACI, risk register, PMI AI standard and EU AI Act mapping) | governance | oversight design | idea |
 
 ## Rules for adding an idea
