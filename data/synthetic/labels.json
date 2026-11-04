@@ -1,0 +1,106 @@
+{
+  "2026-03-06": {
+    "KYC": {
+      "expected_rag": "GREEN",
+      "archetype": "on_track"
+    },
+    "Payments": {
+      "expected_rag": "GREEN",
+      "archetype": "on_track"
+    },
+    "Data-Sharing": {
+      "expected_rag": "GREEN",
+      "archetype": "on_track"
+    },
+    "Collections": {
+      "expected_rag": "AMBER",
+      "archetype": "slipping"
+    },
+    "Reporting": {
+      "expected_rag": "GREEN",
+      "archetype": "on_track"
+    },
+    "Compliance": {
+      "expected_rag": "AMBER",
+      "archetype": "slipping"
+    }
+  },
+  "2026-03-13": {
+    "KYC": {
+      "expected_rag": "GREEN",
+      "archetype": "on_track"
+    },
+    "Payments": {
+      "expected_rag": "GREEN",
+      "archetype": "on_track"
+    },
+    "Data-Sharing": {
+      "expected_rag": "AMBER",
+      "archetype": "silent_drift"
+    },
+    "Collections": {
+      "expected_rag": "GREEN",
+      "archetype": "on_track"
+    },
+    "Reporting": {
+      "expected_rag": "GREEN",
+      "archetype": "on_track"
+    },
+    "Compliance": {
+      "expected_rag": "AMBER",
+      "archetype": "slipping"
+    }
+  },
+  "2026-03-20": {
+    "KYC": {
+      "expected_rag": "AMBER",
+      "archetype": "slipping"
+    },
+    "Payments": {
+      "expected_rag": "RED",
+      "archetype": "hidden_blocker"
+    },
+    "Data-Sharing": {
+      "expected_rag": "AMBER",
+      "archetype": "silent_drift"
+    },
+    "Collections": {
+      "expected_rag": "GREEN",
+      "archetype": "false_alarm"
+    },
+    "Reporting": {
+      "expected_rag": "AMBER",
+      "archetype": "silent_drift"
+    },
+    "Compliance": {
+      "expected_rag": "GREEN",
+      "archetype": "on_track"
+    }
+  },
+  "2026-03-27": {
+    "KYC": {
+      "expected_rag": "RED",
+      "archetype": "red_late"
+    },
+    "Payments": {
+      "expected_rag": "RED",
+      "archetype": "red_late"
+    },
+    "Data-Sharing": {
+      "expected_rag": "AMBER",
+      "archetype": "slipping"
+    },
+    "Collections": {
+      "expected_rag": "GREEN",
+      "archetype": "on_track"
+    },
+    "Reporting": {
+      "expected_rag": "RED",
+      "archetype": "hidden_blocker"
+    },
+    "Compliance": {
+      "expected_rag": "GREEN",
+      "archetype": "on_track"
+    }
+  }
+}
