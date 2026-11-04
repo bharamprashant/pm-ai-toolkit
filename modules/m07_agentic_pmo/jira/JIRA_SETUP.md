@@ -22,7 +22,7 @@ A ready plan: 8 epics, 31 stories, 101 story points, 5 sprints, 4 versions, comp
    - Each "Outward issue link (Blocks)" column -> link type **Blocks**.
 6. **Check the result:** open any story with dependencies and confirm "is blocked by" shows its prerequisites. Open a story from sprint 5 and confirm it is blocked by earlier work.
 7. **Create five sprints** and drag stories by their `sprint-N` label (filter: `labels = sprint-1`).
-8. **Dashboard:** add gadgets for sprint burndown, a filter `status = Eval`, and a filter of blocked issues (`issueFunction` is not needed; use `status != Done AND issueLinkType = "is blocked by"` if your site supports it, otherwise the board's flagged items).
+8. **Dashboard:** add gadgets for sprint burndown and a filter `project = AGPMO AND status = Eval`. For blocked work, use the board's flagged items, or open an issue's linked-issues panel (a JQL filter on link types depends on your site's apps, so check before relying on one).
 9. **GitHub link:** install the GitHub for Jira app and put the issue key (for example `AGPMO-12`) in every branch name and PR title.
 10. **Definition of Done** for each story: tests pass, eval result recorded, the setup step followed once, README numbers tagged measured/modeled/hypothetical, agent contract updated.
 
