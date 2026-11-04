@@ -21,3 +21,4 @@ Status: idea -> scoped -> building -> built (offline measured) -> live-tested.
 3. State how it will be measured (a labelled test set, a metric, a known limit).
 4. Check it is not a duplicate: merge it into an existing module if the pipeline is the same.
 5. Use synthetic data only.
+6. Plan a `SETUP.md` for it (see [SETUP_STANDARD.md](SETUP_STANDARD.md)). A module is not built until its setup steps have been followed once.

@@ -17,6 +17,8 @@ and a human approval gate. Built to show how the AI works, not just that it exis
 | 06 AI vendor / model evaluation harness | planned |
 | 07 Agentic PMO orchestrator | planned |
 
+Every module has a step-by-step `SETUP.md` ([standard](docs/SETUP_STANDARD.md)) covering accounts, credentials, tool configuration, scheduling and governance.
+
 ## Principles
 1. **Code counts, the model judges.** Facts are computed deterministically; the model never does arithmetic.
 2. **Verify before you trust.** Outputs that are not grounded in the data are rejected and flagged.

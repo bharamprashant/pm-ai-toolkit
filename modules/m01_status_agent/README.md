@@ -13,6 +13,8 @@ Jira CSV / API --> facts.py (counts, dates, lists) --> model or rule baseline
                                                                     every step --> audit.jsonl
 ```
 
+**Step-by-step automation setup:** see [SETUP.md](SETUP.md) (prerequisites, credentials, Jira field mapping, scheduling, governance checklist, troubleshooting and which steps are still untested).
+
 ## Run it (no key needed)
 ```bash
 python data/synthetic/generate.py
