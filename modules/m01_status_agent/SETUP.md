@@ -66,7 +66,8 @@ python -m modules.m01_status_agent.run --input out/jira.csv --as-of $(date +%F) 
 Add `--live` to use the model instead of the rule baseline.
 
 ## 7. Schedule it
-Local weekly run (Monday 08:00): `0 8 * * 1  cd /path/to/pm-ai-toolkit && ./run_weekly.sh`
+Local weekly run (Monday 08:00): `0 8 * * 1  JIRA_JQL='project = ABC' /path/to/pm-ai-toolkit/modules/m01_status_agent/run_weekly.sh`
+Cron does **not** inherit your terminal's environment: the script needs `JIRA_BASE_URL`, `JIRA_EMAIL`, `JIRA_API_TOKEN` and `JIRA_JQL`, so export them inside a small wrapper that only you can read, or use the CI option below. This cron line has not been tested.
 CI option: copy `automation/weekly-status.yml.example` to `.github/workflows/`, add the secrets in the repo settings, and keep the human approval step: the workflow produces a DRAFT artifact only; it never marks a report final.
 
 ## 8. Governance checklist
