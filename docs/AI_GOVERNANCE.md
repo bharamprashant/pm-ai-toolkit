@@ -24,6 +24,7 @@ any regulation or standard.
 | 8 | No auto-publish | The agent never writes to a system of record and never approves its own report. A scheduled run stops at a draft and only emails the approver | ENFORCED IN CODE | whole module |
 | 8a | Approval-gated email | `notify publish` refuses a report that is a draft, has no approval record in the log, or was edited after approval (fingerprint check). Nothing is sent without `--send`; the default writes `.eml` files for inspection | ENFORCED IN CODE | `notify.py`, `core/audit.py` `verify_approved()` |
 | 8b | Recipient allow-list | Email goes only to addresses in `config/stakeholders.json`, which is validated (bad addresses and header-injection attempts are rejected) and git-ignored | ENFORCED IN CODE | `notify.py` `load_config()` |
+| 8d | Slack safety | Webhook URLs only from environment and only `https://hooks.slack.com/services/...`; the URL is never logged; the draft goes only to a separate review webhook and never falls back to the stakeholder channel; text from tickets is escaped so it cannot @mention or link | ENFORCED IN CODE | `slack_notify.py` |
 | 8c | Credentials only in environment | SMTP settings come from environment variables; unencrypted sending is refused; error text is never logged | ENFORCED IN CODE | `notify.py` |
 | 9 | Agent contract | Purpose, owner, allowed and forbidden actions, human decisions, stop conditions, review cadence | POLICY ONLY | `AGENT_CONTRACT.md` |
 | 10 | Evaluation before trust | A scored test on labelled cases, to be re-run after any prompt, threshold or model change | BY DESIGN (re-running is up to you) | `eval/run_eval.py` |
@@ -88,6 +89,7 @@ draft, why a human reads it, and why the evaluation exists. Live-model accuracy 
 | `email_prepared` | a dry run writes an `.eml` file | time (UTC), kind, recipient, subject, report file and fingerprint |
 | `email_sent` | an email is really sent | same fields as above |
 | `email_failed` | a send fails | time (UTC), kind, recipient, error class only (never the error text) |
+| `slack_prepared` / `slack_sent` / `slack_failed` | a Slack payload is written, posted, or fails | time (UTC), kind, report file and fingerprint (error class only on failure; never the webhook URL) |
 
 ### 4.2 What is not recorded, and how strong the log is
 - **Not recorded:** the prompt text or version, the input data fingerprint, the rejection reason (it is in the report row,
@@ -104,6 +106,7 @@ draft, why a human reads it, and why the evaluation exists. Live-model accuracy 
 | Offline (default) | **Nothing.** The rule baseline runs locally |
 | `--live` | The workstream name, counts, ticket keys, due and stale lists, and the **text of open-item comments** go to the Anthropic API |
 | Email (`--send`) | The report text and recipient addresses go to **your** mail server (SMTP) using your own credentials |
+| Slack (`--send`) | The report text goes to Slack (a third party) through your webhook; every member of the channel can read it |
 | `--live`, never sent | your Jira token and email, ticket summaries and assignee names (the code does not include them in the model request) |
 | Jira export | Read-only GET requests to your own Jira site |
 
@@ -114,7 +117,7 @@ provider, and check what your comments contain. The repository ships fictional d
 ## 6. Human decisions the tool never takes
 
 From the agent contract: approving a report, accepting a RED, and agreeing escalation and recovery plans. The tool also
-never changes dates, owners or priorities, and never writes to Jira or any system of record. It does send email, but only (a) a review request to the named approver, and (b) after a person has approved and run the publish command with `--send`, the approved report to the configured stakeholders and a check-in to each RED or AMBER workstream owner.
+never changes dates, owners or priorities, and never writes to Jira or any system of record. It does send email and Slack messages, but only (a) a review request to the named approver, and (b) after a person has approved and run the publish command with `--send`, the approved report to the configured stakeholders (email and the stakeholder Slack channel) and a check-in to each RED or AMBER workstream owner (email, and an @mention in Slack).
 
 ## 7. Known risks and how each is handled
 
@@ -127,6 +130,9 @@ never changes dates, owners or priorities, and never writes to Jira or any syste
 | Someone approves without reading | Draft status and the Decisions section make the ask visible | Cannot be prevented by software; needs a review habit |
 | Someone approves under another person's name | Not prevented by the tool | Needs login-based approval, see 3.3 |
 | A wrong or unapproved report reaches stakeholders | `publish` refuses drafts and edited files; the dry run lets a person read the exact emails first; `--send` is explicit | A person can still approve a wrong report and run `--send` |
+| Report posted to the wrong Slack channel | A webhook is bound to one channel when you create it; the draft uses a separate private webhook and never the stakeholder one | Choosing the right channel in Slack when creating the webhook; anyone in the channel can read and copy the report |
+| Ticket text pings the whole workspace (`<!channel>`) | Slack escaping of all ticket and model text | Owners' @mentions are intended and come only from the config file |
+| Webhook URL leaks | Environment only; never logged; revoke and replace in Slack | Anyone holding the URL can post to that channel until revoked |
 | Email goes to the wrong person | Recipients come only from the validated config file | A mistake in the config file itself; review it before first use |
 | Recipient addresses (personal data) sit in files | Config and `out/` are git-ignored; the log stores recipient addresses | Protect the folder; do not commit it; delete the log per your retention rules |
 | Check-in emails sound like instructions from the AI | Sent in the approver's name as Reply-To; each says it comes from an approved report | Tone and need for a check-in are still the approver's call |
@@ -160,6 +166,7 @@ Mapping the controls to the PMI AI standard and the EU AI Act in detail is a pla
 - [ ] I run the evaluation before the first real use and after any change to the prompt, thresholds or model.
 - [ ] I compare the draft and approval fingerprints, or my process makes that unnecessary.
 - [ ] I ran `notify publish` as a dry run and read the emails before the first `--send`.
+- [ ] The Slack review webhook points to a private channel, and I know who can read the stakeholder channel.
 - [ ] `config/stakeholders.json` lists only people who should receive this report, and the folder is access-controlled.
 - [ ] The audit log is kept somewhere it cannot be quietly edited.
 - [ ] Every RED has a named human decision attached.

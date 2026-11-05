@@ -67,11 +67,26 @@ Add `--live` to use the model instead of the rule baseline.
 
 ## 7. Schedule it, and email the right people
 
-### 7.1 The daily flow
+### 7.1 The daily flow and its timing
+Nothing is scheduled until you set it up (7.5). The times below are the recommended pattern, in Stockholm time; only the
+08:00 start is set by the schedule, the other times are a working agreement for people.
+
+| Time (Stockholm) | Who | What happens |
+|---|---|---|
+| 08:00, Mon-Fri | the schedule | pulls the data (read-only Jira or a CSV), computes facts, drafts the report, sends **only the approver** a "Review needed" email and/or Slack message |
+| 08:00 - 10:00 | the approver | reads the draft, approves it with their name |
+| right after approval | the approver | runs `notify publish --via both --send` |
+| immediately | the tool | refuses anything unapproved or edited; otherwise emails the sponsor and steering group (exec view), emails the delivery lead (full view), posts to the stakeholder Slack channel, and asks each Red or Amber owner for a check-in |
+| later that day | owners | reply with cause, recovery plan and date; replies go to the approver by email, or in the Slack thread |
+
+Time zones for CI: GitHub schedules use UTC and ignore daylight saving. 08:00 in Stockholm is 07:00 UTC in winter (CET) and
+06:00 UTC in summer (CEST), so a CI cron of `30 6 * * 1-5` fires at 07:30 in winter and 08:30 in summer. Cron on your own
+machine can use `CRON_TZ=Europe/Stockholm` and then follows daylight saving.
+
 ```
 08:00 every weekday  scheduled run (cron or CI)
-   |  pulls the data (read-only Jira, or a CSV), computes facts, drafts the report
-   |  emails ONLY the approver: "Draft ready for review" (draft attached)
+   |  pulls the data, computes facts, drafts the report
+   |  messages ONLY the approver: "Draft ready for review" (email with the draft attached, and/or a private Slack channel)
    v
 approver reads the draft, approves it with their name           (a person)
    |
@@ -79,11 +94,11 @@ approver reads the draft, approves it with their name           (a person)
 publish step (a person runs it)   verifies the approval and that the file is unchanged, then
    |  - emails the sponsor/steering group a short exec view (RED and AMBER only + decisions needed)
    |  - emails the delivery lead the full team view
-   |  - emails a check-in to the owner of every RED or AMBER workstream, asking for cause,
-   |    recovery plan and date, and any help needed (replies go to the approver)
+   |  - posts the approved report to the stakeholder Slack channel
+   |  - asks the owner of every RED or AMBER workstream for a check-in (email, and an @mention in Slack)
 ```
-The scheduled run never approves and never emails stakeholders. That is deliberate: nothing reaches other people
-until a named person has approved it.
+The scheduled run never approves and never messages stakeholders. That is deliberate: nothing reaches other people
+until a named person has approved it. A reminder when a draft stays unapproved is not built yet.
 
 ### 7.2 Set up the recipients
 1. `cp config/stakeholders.example.json config/stakeholders.json`
@@ -127,13 +142,50 @@ will skip the run, so use an always-on machine or the CI option.
 CI option: copy `automation/weekly-status.yml.example` to `.github/workflows/`, add the secrets listed in it, and keep the human
 approval step. GitHub schedules run in UTC and can start a few minutes late.
 
+### 7.6 Slack: set it up (about 10 minutes)
+Slack messages go through an **Incoming Webhook**: no bot token, no OAuth, and the tool can only post, never read.
+You may need a Slack workspace admin to allow the app. This path has **not** been tested against a real workspace.
+
+1. Go to https://api.slack.com/apps and click **Create New App -> From scratch**. Name it "Status Agent" and pick your workspace.
+2. In the left menu open **Incoming Webhooks** and switch **Activate Incoming Webhooks** on.
+3. Click **Add New Webhook to Workspace**, pick the **stakeholder channel** (for example `#program-status`), and allow it. Copy the
+   URL, which starts with `https://hooks.slack.com/services/`.
+4. Repeat step 3 for a **private channel only the approver can see** (for example `#status-review`) and copy that second URL.
+   Two webhooks keep a draft from ever landing in the stakeholder channel by mistake. The review message is never sent to the
+   stakeholder webhook, even if the review one is missing.
+5. Set both as environment variables on the machine that sends (never in a file in the repo, never in chat):
+   ```bash
+   export SLACK_WEBHOOK_URL="https://hooks.slack.com/services/..."          # approved report, stakeholder channel
+   export SLACK_REVIEW_WEBHOOK_URL="https://hooks.slack.com/services/..."   # draft review request, private channel
+   ```
+6. Optional, to @mention owners: in Slack open the person's profile -> the three dots -> **Copy member ID** (looks like `U01ABCDEF2`)
+   and add it as `"slack_id"` to that owner in `config/stakeholders.json`. Without it the owner is named but not pinged.
+7. Dry run first. It writes the exact message to `out/outbox/slack_publish.json`:
+   ```bash
+   python3 -m modules.m01_status_agent.notify publish --final out/status_DATE_FINAL.md --via slack
+   ```
+   You can paste that JSON into Slack's Block Kit Builder (https://app.slack.com/block-kit-builder) to preview it.
+8. Send for real: add `--send`. Use `--via both` to send email and Slack together. For the scheduled review request set
+   `NOTIFY_VIA=slack` (or `both`) and `SEND_EMAIL=1` in the schedule's environment.
+
+What the Slack message looks like: a header with the program and date, the Red/Amber/Green counts, a **Decisions needed** list,
+one block per Red or Amber workstream (reason with ticket keys and the four counts), a line naming the on-track workstreams, a
+**Check-ins requested** list that @mentions the owners and asks them to reply in the thread, and a footer with the approver and time.
+Text that comes from tickets is escaped, so a comment containing `<!channel>` appears as plain text and cannot ping the workspace.
+
+Security notes: a webhook URL is a password for posting to that channel. Treat it like one. If it leaks, revoke it in the app's
+Incoming Webhooks page and add a new one. The tool refuses any URL that is not `https://hooks.slack.com/services/...`, never
+logs the URL, and logs only the error class if posting fails. Everyone in the channel can read the report, so choose the
+channel accordingly.
+
 ## 8. Governance checklist
 - [ ] I read `AGENT_CONTRACT.md` and accept its limits.
 - [ ] The token is read-only and stored as a secret.
 - [ ] `out/audit.jsonl` is being kept.
 - [ ] A named approver reviews every report before it is shared.
 - [ ] `config/stakeholders.json` lists only the right people and is not committed.
-- [ ] I ran the publish step as a dry run and read the emails before the first `--send`.
+- [ ] I ran the publish step as a dry run and read the emails and the Slack JSON before the first `--send`.
+- [ ] The Slack webhook URLs are in the environment or a CI secret, the review one points to a private channel, and I know who can read the stakeholder channel.
 - [ ] SMTP credentials are in the environment or a CI secret, never in a file in the repo.
 - [ ] I am using synthetic or explicitly approved data.
 
@@ -151,6 +203,10 @@ A correct run prints six workstreams, shows no "(fallback)" marks unless the mod
 | `REFUSED: ...` from `notify publish` | the report is a draft, has no approval record, or was edited after approval | approve the draft (or re-approve) and publish the file the approval created; never edit a FINAL file |
 | `to send for real, set environment variable(s): SMTP_HOST...` | `--send` without mail settings | set the variables in section 7.4 or drop `--send` for a dry run |
 | `email_failed` in the log | login, port or network problem | check host, port, security and app password; the log shows only the error type, so test the same settings in a mail client |
+| `not a Slack incoming-webhook URL` (logged as `slack_failed` with `ValueError`) | the variable holds something other than `https://hooks.slack.com/services/...` | copy the URL again from the app's Incoming Webhooks page |
+| `to post to Slack, set environment variable SLACK_WEBHOOK_URL` | `--via slack --send` without the variable | set it (7.6) or drop `--send` |
+| `Slack review request skipped: SLACK_REVIEW_WEBHOOK_URL is not set` | no private review webhook configured | add it, or the draft is simply not posted to Slack (by design it never falls back to the stakeholder channel) |
+| `slack_failed` in the log (HTTP 403/404 behind it) | the webhook was revoked, the app was removed, or the channel was archived | create a new webhook; the log shows only the error type |
 | `invalid stakeholder config` | bad address or audience in the config | fix the lines it lists |
 | `ANTHROPIC_API_KEY is not set` | `--live` without a key | export the key or drop `--live` |
 
@@ -162,4 +218,6 @@ A correct run prints six workstreams, shows no "(fallback)" marks unless the mod
 | `--live` model run | **no - not run yet** |
 | Section 7.3 (dry-run emails, refusal of drafts and edited files) | yes, run end to end on a clean checkout |
 | Section 7.4 real sending | **simulated server in unit tests only; not tested against a real mail server** |
+| Section 7.6 Slack payloads, escaping, webhook checks, dry run | yes (unit tests and an end-to-end dry run) |
+| Section 7.6 posting to a real Slack workspace | **no - simulated HTTP call in unit tests only** |
 | Section 7.5 cron line and CI template | **no - untested** |

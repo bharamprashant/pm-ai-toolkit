@@ -184,3 +184,145 @@ def test_footer_names_the_generator_once_and_is_not_garbled(tmp_path):
     assert rep.generated_by == "offline-baseline"
     footer = notify.render_text(rep, "team").split("--\n")[-1]
     assert footer.count("computed by code") == 1 and "Pat Approver" in footer
+
+
+# ------------------------------------------------------------------------------------- Slack
+import io
+import urllib.request
+
+from modules.m01_status_agent import slack_notify
+
+HOOK = "https://hooks.slack.com/services/T000/B000/SECRETSECRET"
+SCFG = json.loads(json.dumps(CFG))
+SCFG["workstream_owners"]["Payments"]["slack_id"] = "U01ABCDEF2"
+
+
+class _Resp:
+    def __init__(self, status=200, body=b"ok"):
+        self.status, self._b = status, body
+    def read(self): return self._b
+    def __enter__(self): return self
+    def __exit__(self, *a): return False
+
+
+def test_slack_text_from_tickets_is_escaped_so_it_cannot_ping_or_link(tmp_path):
+    rep = notify.parse_report(_make_draft(tmp_path, comment_red=True).read_text())
+    rep.rows[0].why = "<!channel> see <https://evil.test|click> & <@U999>"
+    rep.approved_by, rep.approved_at = "Pat", "2026-03-20T09:00:00+00:00"
+    blob = json.dumps(slack_notify.publish_payload(rep, SCFG))
+    assert "<!channel>" not in blob and "<https://evil.test" not in blob and "<@U999>" not in blob
+    assert "&lt;!channel&gt;" in blob
+
+
+def test_slack_publish_payload_has_decisions_checkins_mention_and_footer(tmp_path):
+    rep = notify.parse_report(_approved(tmp_path, comment_red=True).read_text())
+    payload = slack_notify.publish_payload(rep, SCFG)
+    blob = json.dumps(payload)
+    assert payload["text"].startswith("Test Program status 2026-03-20")
+    assert "Decisions needed" in blob and "Check-ins requested" in blob
+    assert "<@U01ABCDEF2>" in blob            # configured owner is mentioned
+    assert "Col Owner" in blob                # owner without a slack_id is named, not mentioned
+    assert "Approved by Pat Approver" in blob
+    assert len(payload["blocks"]) <= slack_notify.MAX_BLOCKS
+
+
+def test_slack_block_count_and_text_length_are_capped():
+    blocks = [slack_notify._section("x" * 5000) for _ in range(80)]
+    assert all(len(b["text"]["text"]) <= slack_notify.MAX_SECTION for b in blocks)
+    assert len(slack_notify._cap(blocks + [slack_notify._context("footer")])) <= slack_notify.MAX_BLOCKS
+
+
+@pytest.mark.parametrize("url", ["http://hooks.slack.com/services/a/b/c", "https://evil.test/services/a/b/c",
+                                 "https://hooks.slack.com.evil.test/services/a", "https://hooks.slack.com/other/a"])
+def test_only_real_slack_webhook_urls_are_accepted(url):
+    with pytest.raises(ValueError):
+        slack_notify.validate_webhook(url)
+    assert slack_notify.validate_webhook(HOOK) == HOOK
+
+
+def test_slack_dry_run_writes_payload_file_and_posts_nothing(tmp_path, monkeypatch):
+    monkeypatch.setattr(urllib.request, "urlopen", lambda *a, **k: (_ for _ in ()).throw(AssertionError("no network in dry run")))
+    final = _approved(tmp_path, comment_red=True)
+    (tmp_path / "cfg.json").write_text(json.dumps(SCFG))
+    rc = notify.main(["publish", "--final", str(final), "--config", str(tmp_path / "cfg.json"),
+                      "--out", str(tmp_path), "--via", "slack"])
+    assert rc == 0
+    payload = json.loads((tmp_path / "outbox" / "slack_publish.json").read_text())
+    assert payload["blocks"][0]["type"] == "header"
+    assert not list((tmp_path / "outbox").glob("*.eml"))      # --via slack sends no email
+    log = (tmp_path / "audit.jsonl").read_text()
+    assert "slack_prepared" in log and "slack_sent" not in log
+
+
+def test_slack_send_posts_json_and_never_logs_the_webhook_url(tmp_path, monkeypatch):
+    seen = {}
+    def fake_urlopen(req, timeout=None):
+        seen["url"], seen["body"] = req.full_url, json.loads(req.data)
+        return _Resp()
+    monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+    monkeypatch.setenv("SLACK_WEBHOOK_URL", HOOK)
+    final = _approved(tmp_path, comment_red=True)
+    (tmp_path / "cfg.json").write_text(json.dumps(SCFG))
+    rc = notify.main(["publish", "--final", str(final), "--config", str(tmp_path / "cfg.json"),
+                      "--out", str(tmp_path), "--via", "slack", "--send"])
+    assert rc == 0 and seen["url"] == HOOK and "blocks" in seen["body"]
+    assert "SECRETSECRET" not in (tmp_path / "audit.jsonl").read_text()
+
+
+def test_slack_failure_is_logged_without_error_text_and_exit_code_nonzero(tmp_path, monkeypatch):
+    def boom(req, timeout=None):
+        raise urllib.error.URLError("leaks SECRETSECRET")
+    monkeypatch.setattr(urllib.request, "urlopen", boom)
+    monkeypatch.setenv("SLACK_WEBHOOK_URL", HOOK)
+    final = _approved(tmp_path)
+    (tmp_path / "cfg.json").write_text(json.dumps(SCFG))
+    rc = notify.main(["publish", "--final", str(final), "--config", str(tmp_path / "cfg.json"),
+                      "--out", str(tmp_path), "--via", "slack", "--send"])
+    log = (tmp_path / "audit.jsonl").read_text()
+    assert rc == 1 and "slack_failed" in log and "SECRETSECRET" not in log
+
+
+def test_slack_publish_refuses_draft_and_edited_files_like_email(tmp_path):
+    draft = _make_draft(tmp_path)
+    (tmp_path / "cfg.json").write_text(json.dumps(SCFG))
+    args = ["--config", str(tmp_path / "cfg.json"), "--out", str(tmp_path), "--via", "slack"]
+    assert notify.main(["publish", "--final", str(draft), *args]) == 2
+    final = _approved(tmp_path, snap="2026-03-27")
+    final.write_text(final.read_text().replace("AMBER", "GREEN", 1))
+    assert notify.main(["publish", "--final", str(final), *args]) == 2
+
+
+def test_slack_review_request_needs_its_own_webhook_and_never_falls_back(tmp_path, monkeypatch, capsys):
+    monkeypatch.setenv("SLACK_WEBHOOK_URL", HOOK)
+    monkeypatch.delenv("SLACK_REVIEW_WEBHOOK_URL", raising=False)
+    monkeypatch.setattr(urllib.request, "urlopen", lambda *a, **k: (_ for _ in ()).throw(AssertionError("draft must not be posted")))
+    draft = _make_draft(tmp_path)
+    (tmp_path / "cfg.json").write_text(json.dumps(SCFG))
+    rc = notify.main(["review-request", "--draft", str(draft), "--config", str(tmp_path / "cfg.json"),
+                      "--out", str(tmp_path), "--via", "slack", "--send"])
+    assert rc == 0 and "SLACK_REVIEW_WEBHOOK_URL is not set" in capsys.readouterr().out
+
+
+def test_slack_send_without_webhook_variable_fails_clearly(tmp_path, monkeypatch):
+    monkeypatch.delenv("SLACK_WEBHOOK_URL", raising=False)
+    final = _approved(tmp_path)
+    (tmp_path / "cfg.json").write_text(json.dumps(SCFG))
+    with pytest.raises(RuntimeError, match="SLACK_WEBHOOK_URL"):
+        notify.main(["publish", "--final", str(final), "--config", str(tmp_path / "cfg.json"),
+                     "--out", str(tmp_path), "--via", "slack", "--send"])
+
+
+def test_config_rejects_a_malformed_slack_id(tmp_path):
+    bad = json.loads(json.dumps(SCFG))
+    bad["workstream_owners"]["Payments"]["slack_id"] = "@payments-owner"
+    (tmp_path / "bad.json").write_text(json.dumps(bad))
+    with pytest.raises(ValueError, match="slack_id"):
+        notify.load_config(tmp_path / "bad.json")
+
+
+def test_owner_checkin_shows_the_whole_program_headline_not_a_one_row_count(tmp_path):
+    rep = notify.parse_report(_approved(tmp_path, comment_red=True).read_text())
+    items, _ = notify.publish_messages(rep, CFG, "s@example.com")
+    checkin = next(m for k, m in items if k == "owner_checkin" and "Pay Owner" in m["To"])
+    body = checkin.get_body(("plain",)).get_content()
+    assert rep.headline() in body and "Reason:" in body and ". Please reply" in body

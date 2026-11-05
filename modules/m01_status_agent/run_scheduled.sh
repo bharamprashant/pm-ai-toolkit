@@ -9,6 +9,7 @@
 #   PROGRAM_NAME      title of the report (default "My Program")
 #   USE_LIVE_MODEL=1  use the AI model (needs ANTHROPIC_API_KEY); default is the offline rules
 #   SEND_EMAIL=1      really send the review request (needs SMTP_HOST, SMTP_FROM); default is a dry run
+#   NOTIFY_VIA        email (default), slack or both: where the review request goes (see SETUP.md 7.6 for Slack)
 #   NOTIFY_CONFIG     path to the stakeholder config (default config/stakeholders.json)
 #   OUT_DIR           output folder (default out)
 #   AS_OF_DATE        report date, default today (use 2026-03-20 with the sample data)
@@ -32,9 +33,9 @@ LIVE=(); [[ "${USE_LIVE_MODEL:-0}" == "1" ]] && LIVE=(--live)
 SEND=(); [[ "${SEND_EMAIL:-0}" == "1" ]] && SEND=(--send)
 "$PY" -m modules.m01_status_agent.notify review-request \
   --draft "$OUT/status_${AS_OF}_DRAFT.md" --config "${NOTIFY_CONFIG:-config/stakeholders.json}" \
-  --out "$OUT" ${SEND[@]+"${SEND[@]}"}
+  --via "${NOTIFY_VIA:-email}" --out "$OUT" ${SEND[@]+"${SEND[@]}"}
 
 echo "Draft ready: $OUT/status_${AS_OF}_DRAFT.md"
 echo "Next (a person): approve, then publish:"
 echo "  $PY -m modules.m01_status_agent.run --approve $OUT/status_${AS_OF}_DRAFT.md --approver \"Your Name\""
-echo "  $PY -m modules.m01_status_agent.notify publish --final $OUT/status_${AS_OF}_FINAL.md [--send]"
+echo "  $PY -m modules.m01_status_agent.notify publish --final $OUT/status_${AS_OF}_FINAL.md --via email|slack|both [--send]"

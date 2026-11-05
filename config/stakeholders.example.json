@@ -1,17 +1,59 @@
 {
-  "_note": "Copy to config/stakeholders.json (git-ignored) and replace the example.com addresses. Never commit real addresses.",
-  "approver": { "name": "Program Manager", "email": "pm@example.com" },
+  "_note": "Copy to config/stakeholders.json (git-ignored) and replace the example.com addresses. Never commit real addresses. slack_id is optional: in Slack open the person's profile -> the three dots -> Copy member ID.",
+  "approver": {
+    "name": "Program Manager",
+    "email": "pm@example.com"
+  },
   "stakeholders": [
-    { "name": "Sponsor",          "email": "sponsor@example.com",   "audience": "exec" },
-    { "name": "Steering member",  "email": "steerco@example.com",   "audience": "exec" },
-    { "name": "Delivery lead",    "email": "delivery@example.com",  "audience": "team" }
+    {
+      "name": "Sponsor",
+      "email": "sponsor@example.com",
+      "audience": "exec"
+    },
+    {
+      "name": "Steering member",
+      "email": "steerco@example.com",
+      "audience": "exec"
+    },
+    {
+      "name": "Delivery lead",
+      "email": "delivery@example.com",
+      "audience": "team"
+    }
   ],
   "workstream_owners": {
-    "KYC":          { "name": "KYC owner",          "email": "kyc-owner@example.com" },
-    "Payments":     { "name": "Payments owner",     "email": "payments-owner@example.com" },
-    "Data-Sharing": { "name": "Data-Sharing owner", "email": "datasharing-owner@example.com" },
-    "Collections":  { "name": "Collections owner",  "email": "collections-owner@example.com" },
-    "Reporting":    { "name": "Reporting owner",    "email": "reporting-owner@example.com" },
-    "Compliance":   { "name": "Compliance owner",   "email": "compliance-owner@example.com" }
+    "KYC": {
+      "name": "KYC owner",
+      "email": "kyc-owner@example.com",
+      "slack_id": "U01KYC0001"
+    },
+    "Payments": {
+      "name": "Payments owner",
+      "email": "payments-owner@example.com",
+      "slack_id": "U01PAY0002"
+    },
+    "Data-Sharing": {
+      "name": "Data-Sharing owner",
+      "email": "datasharing-owner@example.com",
+      "slack_id": "U01DAT0003"
+    },
+    "Collections": {
+      "name": "Collections owner",
+      "email": "collections-owner@example.com",
+      "slack_id": "U01COL0004"
+    },
+    "Reporting": {
+      "name": "Reporting owner",
+      "email": "reporting-owner@example.com",
+      "slack_id": "U01REP0005"
+    },
+    "Compliance": {
+      "name": "Compliance owner",
+      "email": "compliance-owner@example.com",
+      "slack_id": "U01COM0006"
+    }
+  },
+  "slack": {
+    "mention_owners": true
   }
 }

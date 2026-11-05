@@ -50,7 +50,7 @@ Step 2. Run the tests.
 ```bash
 python3 -m pytest -q
 ```
-Expected: `24 passed`
+Expected: `39 passed`
 
 Step 3. Produce a status report.
 ```bash
@@ -125,7 +125,7 @@ INPUT_CSV=data/synthetic/snapshots/2026-03-20.csv AS_OF_DATE=2026-03-20 modules/
 python3 -m modules.m01_status_agent.run --approve out/status_2026-03-20_DRAFT.md --approver "Your Name"
 python3 -m modules.m01_status_agent.notify publish --final out/status_2026-03-20_FINAL.md
 ```
-Real sending needs `SMTP_HOST` and `SMTP_FROM` in the environment plus `--send`. Cron does not inherit your terminal's
+Add `--via slack` or `--via both` for Slack (setup in SETUP.md 7.6). Real email needs `SMTP_HOST` and `SMTP_FROM` in the environment, real Slack needs `SLACK_WEBHOOK_URL`, and both need `--send`. Cron does not inherit your terminal's
 environment, so set the variables inside the job (cron example in SETUP.md 7.5). The scheduling and real-send steps have not
 been run against a real server or a real scheduler yet.
 

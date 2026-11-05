@@ -42,7 +42,7 @@ Full explanation, design choices and limits: [docs/HOW_IT_WORKS.md](docs/HOW_IT_
 - Run it with **no accounts and no API key** (offline baseline), or with a live model by adding `--live`.
 - Approve a report as a named person and get an append-only audit trail with content fingerprints.
 - **Run it on a schedule** (for example every weekday at 08:00): it pulls the data, drafts the report and emails only the approver.
-- **Email the right people after approval:** a short exec view for sponsors, a full view for the delivery lead, and a check-in to the owner of every Red or Amber workstream. It refuses to send anything unapproved or edited after approval, and sends nothing unless you pass `--send` (the default writes `.eml` files to inspect).
+- **Email and Slack the right people after approval:** a short exec view for sponsors, a full view for the delivery lead, a Slack post for the stakeholder channel, and a check-in to the owner of every Red or Amber workstream. It refuses to send anything unapproved or edited after approval, and sends nothing unless you pass `--send` (the default writes `.eml` and Slack `.json` files to inspect).
 - Score the agent against 24 labelled workstream-weeks and see a confusion matrix, the misses, and the grounding rate.
 - Point it at your own Jira Cloud site through a read-only connector (not yet run against a live site, see status below).
 - Reuse the agent contract and setup standard for any other AI helper your PMO introduces.
@@ -76,7 +76,7 @@ No coding needed: [docs/FOR_NON_TECHNICAL_USERS.md](docs/FOR_NON_TECHNICAL_USERS
 git clone https://github.com/bharamprashant/pm-ai-toolkit
 cd pm-ai-toolkit
 python3 -m pip install pytest
-python3 -m pytest -q                                   # expect: 24 passed
+python3 -m pytest -q                                   # expect: 39 passed
 python3 -m modules.m01_status_agent.run --input data/synthetic/snapshots/2026-03-20.csv --as-of 2026-03-20
 python3 -m modules.m01_status_agent.eval.run_eval      # expect: RAG accuracy 87.5%
 ```
@@ -114,7 +114,7 @@ data/          synthetic Jira-shaped data generator (seeded, reproducible), snap
 modules/       one folder per module: code, README, SETUP.md, AGENT_CONTRACT.md, eval
 governance/    reusable agent-contract template
 docs/          getting started, how it works, setup standard, idea backlog
-tests/         24 automated tests (run in CI on every push)
+tests/         39 automated tests (run in CI on every push)
 ```
 
 ## Safety

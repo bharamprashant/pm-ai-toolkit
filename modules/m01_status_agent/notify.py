@@ -1,6 +1,6 @@
 """Email notifications for the status agent. Approval-gated, dry-run by default.
 
-Two commands:
+Two commands (add --via slack or --via both to also post to Slack; see slack_notify.py):
 
   review-request  Tell the approver a DRAFT is waiting (sent to the approver only, draft attached).
   publish         After a report is APPROVED: email the stakeholders (exec or team view) and send a
@@ -67,6 +67,7 @@ class Report:
     generated_by: str
     rows: list[Row] = field(default_factory=list)
     decisions: list[str] = field(default_factory=list)
+    overall: str | None = None   # set when this Report is a one-workstream slice of a bigger report
 
     def counts(self) -> dict[str, int]:
         c = {"RED": 0, "AMBER": 0, "GREEN": 0}
@@ -75,6 +76,8 @@ class Report:
         return c
 
     def headline(self) -> str:
+        if self.overall:
+            return self.overall
         c = self.counts()
         return f"{c['RED']} RED, {c['AMBER']} AMBER, {c['GREEN']} GREEN"
 
@@ -141,6 +144,8 @@ def load_config(path: str | Path) -> dict:
             problems.append(f"stakeholders[{i}]: audience must be one of {sorted(AUDIENCES)}")
     for ws, o in (cfg.get("workstream_owners") or {}).items():
         _check_addr(f"workstream_owners[{ws}]", o.get("name"), o.get("email"), problems)
+        if o.get("slack_id") is not None and not re.match(r"^[UW][A-Z0-9]{6,}$", str(o["slack_id"])):
+            problems.append(f"workstream_owners[{ws}]: slack_id must look like U01ABCDEF2 (Slack profile -> Copy member ID)")
     if problems:
         raise ValueError("invalid stakeholder config:\n  - " + "\n  - ".join(problems))
     cfg.setdefault("stakeholders", [])
@@ -268,11 +273,11 @@ def publish_messages(rep: Report, cfg: dict, sender: str) -> tuple[list[tuple[st
         if not owner:
             skipped.append(f"{r.workstream} ({r.rag}): no owner in config, no check-in sent")
             continue
-        intro = (f"{r.workstream} is {r.rag} in the approved status of {rep.as_of}. Reason: {r.why} "
+        intro = (f"{r.workstream} is {r.rag} in the approved status of {rep.as_of}. Reason: {r.why.rstrip('.')}. "
                  "Please reply to this email with: (1) the cause in one line, (2) your recovery plan and the date "
                  "it is back on track, (3) any help or decision you need and from whom.")
         one = Report(rep.program, rep.as_of, rep.approved_by, rep.approved_at, rep.generated_by, [r],
-                     [d for d in rep.decisions if r.workstream in d])
+                     [d for d in rep.decisions if r.workstream in d], overall=rep.headline())
         subject = f"[Check-in] {r.workstream} is {r.rag} - {rep.program} status {rep.as_of}"
         out.append(("owner_checkin", _message(sender, owner["name"], owner["email"], subject,
                     render_text(one, "team", intro), render_html(one, "team", intro), reply)))
@@ -343,13 +348,19 @@ def main(argv=None) -> int:
         sp.add_argument("--draft" if name == "review-request" else "--final", required=True)
         sp.add_argument("--config", default="config/stakeholders.json")
         sp.add_argument("--out", default="out")
-        sp.add_argument("--send", action="store_true", help="really send; default is to write .eml files only")
+        sp.add_argument("--via", choices=["email", "slack", "both"], default="email",
+                        help="where to send; default email")
+        sp.add_argument("--send", action="store_true",
+                        help="really send; default is to write .eml / .json files only")
     a = p.parse_args(argv)
     out = Path(a.out)
     log = AuditLog(out / "audit.jsonl")
     cfg = load_config(a.config)
     sender = os.environ.get("SMTP_FROM") or "pm-ai-toolkit@example.invalid"
+    use_email, use_slack = a.via in ("email", "both"), a.via in ("slack", "both")
     skipped: list[str] = []
+    items: list = []
+    slack_items: list = []
 
     if a.cmd == "review-request":
         path = Path(a.draft)
@@ -357,7 +368,11 @@ def main(argv=None) -> int:
         rep = parse_report(text)
         if rep.approved_by:
             p.error("this report is already approved; use 'publish' instead")
-        items = review_request(rep, cfg, sender, path.name, text)
+        if use_email:
+            items = review_request(rep, cfg, sender, path.name, text)
+        if use_slack:
+            from modules.m01_status_agent import slack_notify
+            slack_items = slack_notify.review_items(rep, cfg, path.name)
     else:
         path = Path(a.final)
         try:
@@ -369,14 +384,28 @@ def main(argv=None) -> int:
             return 2
         text = path.read_text(encoding="utf-8")
         rep = parse_report(text)
-        items, skipped = publish_messages(rep, cfg, sender)
+        if use_email:
+            items, skipped = publish_messages(rep, cfg, sender)
+        if use_slack:
+            from modules.m01_status_agent import slack_notify
+            slack_items = slack_notify.publish_items(rep, cfg)
 
-    ok, failed = deliver(items, path.name, fingerprint(text), log, out / "outbox", a.send)
+    sha = fingerprint(text)
     mode = "sent" if a.send else f"prepared (dry run, nothing sent) in {out / 'outbox'}"
-    print(f"{ok} email(s) {mode}; {failed} failed")
+    failed_total = 0
+    if items:
+        ok, failed = deliver(items, path.name, sha, log, out / "outbox", a.send)
+        print(f"{ok} email(s) {mode}; {failed} failed")
+        failed_total += failed
+    if slack_items:
+        from modules.m01_status_agent import slack_notify
+        ok, failed, notes = slack_notify.deliver(slack_items, path.name, sha, log, out / "outbox", a.send, os.environ)
+        print(f"{ok} Slack message(s) {mode}; {failed} failed")
+        skipped += notes
+        failed_total += failed
     for s in skipped:
         print("note:", s)
-    return 1 if failed else 0
+    return 1 if failed_total else 0
 
 
 if __name__ == "__main__":
