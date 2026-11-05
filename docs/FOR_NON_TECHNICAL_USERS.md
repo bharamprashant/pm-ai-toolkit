@@ -4,9 +4,10 @@ You do not need to know how to code. If you can follow a checklist, you can run 
 what it is in plain words, how to try it in your browser **without installing anything**, how to read what comes
 out, and what to be careful about.
 
-> **Honest status:** the browser route below (GitHub Codespaces) uses a standard configuration file that is in this
-> repo, but the author has **not yet opened it in Codespaces**. If a step does not match what you see, the
-> [technical guide](GETTING_STARTED.md) is the tested route (Linux, Python 3.13 and CI on 3.12).
+> **Honest status:** the browser route below (GitHub Codespaces) was opened and run by the author on 5 Nov 2026: the
+> setup finished by itself, `python3 -m pytest -q` printed `49 passed`, and the status report ran on the sample data. It was
+> tried once, on one account, so if a step does not match what you see, the
+> [technical guide](GETTING_STARTED.md) is the other tested route (Linux, Python 3.13 and CI on 3.12).
 
 ## 1. What is this, in plain words?
 
