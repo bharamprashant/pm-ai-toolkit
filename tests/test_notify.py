@@ -2,7 +2,7 @@
 import json
 import smtplib
 from datetime import date
-from email import message_from_bytes
+from email import message_from_bytes, policy
 from pathlib import Path
 
 import pytest
@@ -326,3 +326,123 @@ def test_owner_checkin_shows_the_whole_program_headline_not_a_one_row_count(tmp_
     checkin = next(m for k, m in items if k == "owner_checkin" and "Pay Owner" in m["To"])
     body = checkin.get_body(("plain",)).get_content()
     assert rep.headline() in body and "Reason:" in body and ". Please reply" in body
+
+
+# ------------------------------------------------------------------------------------ reminders
+from datetime import datetime, timedelta, timezone
+
+RCFG = json.loads(json.dumps(SCFG))
+RCFG["escalation"] = {"name": "Line Manager", "email": "manager@example.com"}
+
+
+def _draft_with_log(tmp_path):
+    """A generated draft plus the draft_created record the real CLI would have written."""
+    draft = _make_draft(tmp_path, comment_red=True)
+    log = AuditLog(tmp_path / "audit.jsonl")
+    log.record("agent:offline-baseline", "draft_created", draft=draft.name, sha="abc", rejected=[])
+    created = datetime.fromisoformat(json.loads((tmp_path / "audit.jsonl").read_text().splitlines()[-1])["ts"])
+    (tmp_path / "cfg.json").write_text(json.dumps(RCFG))
+    return draft, created
+
+
+def _remind(tmp_path, draft, now, *extra):
+    return notify.main(["remind", "--draft", str(draft), "--config", str(tmp_path / "cfg.json"), "--out", str(tmp_path),
+                        "--now", now.isoformat(), *extra])
+
+
+def test_no_reminder_before_the_first_threshold(tmp_path, capsys):
+    draft, created = _draft_with_log(tmp_path)
+    assert _remind(tmp_path, draft, created + timedelta(hours=1)) == 0
+    assert "no reminder due" in capsys.readouterr().out
+    assert not (tmp_path / "outbox").exists()
+
+
+def test_first_reminder_goes_only_to_the_approver_with_the_headline_and_commands(tmp_path):
+    draft, created = _draft_with_log(tmp_path)
+    assert _remind(tmp_path, draft, created + timedelta(hours=2, minutes=5)) == 0
+    emls = list((tmp_path / "outbox").glob("*.eml"))
+    assert len(emls) == 1 and "reminder_1_pat-example-com" in emls[0].name
+    msg = message_from_bytes(emls[0].read_bytes(), policy=policy.default)
+    body = msg.get_body(("plain",)).get_content()
+    assert "[Reminder]" in msg["Subject"] and "--approve" in body and "stakeholders have not been updated" in body
+
+
+def test_escalation_goes_to_the_contact_with_the_headline_only(tmp_path):
+    draft, created = _draft_with_log(tmp_path)
+    assert _remind(tmp_path, draft, created + timedelta(hours=4, minutes=5)) == 0
+    names = sorted(p.name for p in (tmp_path / "outbox").glob("*.eml"))
+    assert any(n.startswith("reminder_1") for n in names) and any(n.startswith("reminder_2_manager") for n in names)
+    esc = message_from_bytes(next((tmp_path / "outbox").glob("reminder_2_*.eml")).read_bytes(), policy=policy.default)
+    body = esc.get_body(("plain",)).get_content()
+    assert "Overall in the draft:" in body and "NW-113" not in body and "Rule check" not in body and "Payments" not in body
+    assert "has not been shared with you" in body
+
+
+def test_reminders_are_not_repeated_once_really_sent(tmp_path, monkeypatch):
+    sent = []
+    class FakeSMTP:
+        def __init__(self, *a, **k): pass
+        def __enter__(self): return self
+        def __exit__(self, *a): return False
+        def ehlo(self): pass
+        def starttls(self, context=None): pass
+        def login(self, u, p): pass
+        def send_message(self, m): sent.append(m["Subject"])
+    monkeypatch.setattr(smtplib, "SMTP", FakeSMTP)
+    monkeypatch.setenv("SMTP_HOST", "h"); monkeypatch.setenv("SMTP_FROM", "f@example.com")
+    draft, created = _draft_with_log(tmp_path)
+    t = created + timedelta(hours=2, minutes=5)
+    assert _remind(tmp_path, draft, t, "--send") == 0 and len(sent) == 1
+    assert _remind(tmp_path, draft, t + timedelta(minutes=30), "--send") == 0 and len(sent) == 1   # same level: not again
+    assert _remind(tmp_path, draft, created + timedelta(hours=4, minutes=5), "--send") == 0 and len(sent) == 2  # escalation only
+
+
+def test_a_dry_run_does_not_block_a_later_real_reminder(tmp_path):
+    draft, created = _draft_with_log(tmp_path)
+    t = created + timedelta(hours=2, minutes=5)
+    _remind(tmp_path, draft, t); _remind(tmp_path, draft, t)
+    assert (tmp_path / "audit.jsonl").read_text().count("email_prepared") == 2
+    entries = notify.read_log(tmp_path / "audit.jsonl")
+    levels, _, _ = notify.due_reminders(entries, draft.name, t, 2, 4, True)
+    assert levels == [1]
+
+
+def test_no_reminder_once_the_draft_is_approved(tmp_path, capsys):
+    draft, created = _draft_with_log(tmp_path)
+    approve(draft, "Pat Approver", AuditLog(tmp_path / "audit.jsonl"))
+    assert _remind(tmp_path, draft, created + timedelta(hours=9)) == 0
+    assert "already approved" in capsys.readouterr().out and not (tmp_path / "outbox").exists()
+
+
+def test_reminder_for_a_draft_with_no_log_record_is_refused(tmp_path):
+    draft = _make_draft(tmp_path)
+    (tmp_path / "cfg.json").write_text(json.dumps(RCFG))
+    assert _remind(tmp_path, draft, datetime.now(timezone.utc) + timedelta(hours=9)) == 2
+
+
+def test_escalation_without_a_configured_contact_says_so_and_still_reminds(tmp_path, capsys):
+    draft, created = _draft_with_log(tmp_path)
+    (tmp_path / "cfg.json").write_text(json.dumps(SCFG))       # no "escalation" block
+    assert _remind(tmp_path, draft, created + timedelta(hours=5)) == 0
+    out = capsys.readouterr().out
+    assert "no escalation contact is configured" in out
+    assert [p.name for p in (tmp_path / "outbox").glob("*.eml")] == ["reminder_1_pat-example-com.eml"]
+
+
+def test_slack_reminder_uses_the_private_review_webhook_and_escalation_has_its_own(tmp_path, monkeypatch, capsys):
+    posted = []
+    monkeypatch.setattr(urllib.request, "urlopen", lambda req, timeout=None: (posted.append(req.full_url), _Resp())[1])
+    monkeypatch.setenv("SLACK_WEBHOOK_URL", "https://hooks.slack.com/services/T/STAKEHOLDER/x")
+    monkeypatch.setenv("SLACK_REVIEW_WEBHOOK_URL", "https://hooks.slack.com/services/T/REVIEW/x")
+    monkeypatch.delenv("SLACK_ESCALATION_WEBHOOK_URL", raising=False)
+    draft, created = _draft_with_log(tmp_path)
+    assert _remind(tmp_path, draft, created + timedelta(hours=4, minutes=5), "--via", "slack", "--send") == 0
+    assert posted == ["https://hooks.slack.com/services/T/REVIEW/x"]        # never the stakeholder webhook
+    assert "SLACK_ESCALATION_WEBHOOK_URL is not set" in capsys.readouterr().out
+
+
+def test_config_rejects_bad_reminder_settings(tmp_path):
+    bad = json.loads(json.dumps(RCFG)); bad["reminders"] = {"after_hours": -1}; bad["escalation"]["email"] = "nope"
+    (tmp_path / "bad.json").write_text(json.dumps(bad))
+    with pytest.raises(ValueError, match="reminders.after_hours"):
+        notify.load_config(tmp_path / "bad.json")

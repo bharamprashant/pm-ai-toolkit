@@ -1,5 +1,5 @@
 {
-  "_note": "Copy to config/stakeholders.json (git-ignored) and replace the example.com addresses. Never commit real addresses. slack_id is optional: in Slack open the person's profile -> the three dots -> Copy member ID.",
+  "_note": "Copy to config/stakeholders.json (git-ignored) and replace the example.com addresses. Never commit real addresses. slack_id is optional: in Slack open the person's profile -> the three dots -> Copy member ID. escalation and reminders are optional: the escalation contact only ever receives the headline counts, never the report.",
   "approver": {
     "name": "Program Manager",
     "email": "pm@example.com"
@@ -55,5 +55,13 @@
   },
   "slack": {
     "mention_owners": true
+  },
+  "escalation": {
+    "name": "Line manager",
+    "email": "manager@example.com"
+  },
+  "reminders": {
+    "after_hours": 2,
+    "escalate_after_hours": 4
   }
 }

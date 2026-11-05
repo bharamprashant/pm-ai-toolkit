@@ -25,6 +25,7 @@ any regulation or standard.
 | 8a | Approval-gated email | `notify publish` refuses a report that is a draft, has no approval record in the log, or was edited after approval (fingerprint check). Nothing is sent without `--send`; the default writes `.eml` files for inspection | ENFORCED IN CODE | `notify.py`, `core/audit.py` `verify_approved()` |
 | 8b | Recipient allow-list | Email goes only to addresses in `config/stakeholders.json`, which is validated (bad addresses and header-injection attempts are rejected) and git-ignored | ENFORCED IN CODE | `notify.py` `load_config()` |
 | 8d | Slack safety | Webhook URLs only from environment and only `https://hooks.slack.com/services/...`; the URL is never logged; the draft goes only to a separate review webhook and never falls back to the stakeholder channel; text from tickets is escaped so it cannot @mention or link | ENFORCED IN CODE | `slack_notify.py` |
+| 8e | Reminder and escalation | A draft left unapproved is chased by `notify remind`: the approver after 2 hours, an escalation contact after 4. The escalation message carries the headline only, never the report, and each level is sent once | ENFORCED IN CODE (the timing is a schedule you set up) | `notify.py` `due_reminders()` |
 | 8c | Credentials only in environment | SMTP settings come from environment variables; unencrypted sending is refused; error text is never logged | ENFORCED IN CODE | `notify.py` |
 | 9 | Agent contract | Purpose, owner, allowed and forbidden actions, human decisions, stop conditions, review cadence | POLICY ONLY | `AGENT_CONTRACT.md` |
 | 10 | Evaluation before trust | A scored test on labelled cases, to be re-run after any prompt, threshold or model change | BY DESIGN (re-running is up to you) | `eval/run_eval.py` |
@@ -89,6 +90,7 @@ draft, why a human reads it, and why the evaluation exists. Live-model accuracy 
 | `email_prepared` | a dry run writes an `.eml` file | time (UTC), kind, recipient, subject, report file and fingerprint |
 | `email_sent` | an email is really sent | same fields as above |
 | `email_failed` | a send fails | time (UTC), kind, recipient, error class only (never the error text) |
+| `email_sent` / `slack_sent` with kind `reminder_1`, `reminder_2`, `slack_reminder`, `slack_escalation` | a reminder or escalation is really sent | same fields; this is what stops a level repeating |
 | `slack_prepared` / `slack_sent` / `slack_failed` | a Slack payload is written, posted, or fails | time (UTC), kind, report file and fingerprint (error class only on failure; never the webhook URL) |
 
 ### 4.2 What is not recorded, and how strong the log is
@@ -127,6 +129,7 @@ never changes dates, owners or priorities, and never writes to Jira or any syste
 | Model miscounts or misreads dates | It is never given that job | None for counts; thresholds are rules you choose |
 | Model misses a hidden blocker | Human review of the draft; the evaluation exposes the miss rate | Live-model miss rate unknown |
 | Model over-alarms (false RED) | Human review; the eval's confusion matrix | Live-model false-alarm rate unknown |
+| Approver is away and the report is never published | `remind` nudges the approver, then tells an escalation contact (headline only) | Needs the reminder job running on a persistent machine; the contact cannot approve on their behalf |
 | Someone approves without reading | Draft status and the Decisions section make the ask visible | Cannot be prevented by software; needs a review habit |
 | Someone approves under another person's name | Not prevented by the tool | Needs login-based approval, see 3.3 |
 | A wrong or unapproved report reaches stakeholders | `publish` refuses drafts and edited files; the dry run lets a person read the exact emails first; `--send` is explicit | A person can still approve a wrong report and run `--send` |

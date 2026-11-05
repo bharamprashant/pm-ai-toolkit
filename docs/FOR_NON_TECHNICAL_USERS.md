@@ -30,7 +30,7 @@ You need a free GitHub account.
 1. Open https://github.com/bharamprashant/pm-ai-toolkit
 2. Click the green **Code** button -> **Codespaces** tab -> **Create codespace on main**.
 3. Wait about a minute while it sets itself up. You will see a code editor in your browser. At the bottom is a
-   **Terminal** panel. When setup ends it should print `39 passed`, which means everything works.
+   **Terminal** panel. When setup ends it should print `49 passed`, which means everything works.
 4. Click in the Terminal, paste this line, press Enter:
    `python -m modules.m01_status_agent.run --input data/synthetic/snapshots/2026-03-20.csv --as-of 2026-03-20`
 5. A table appears: one row per workstream with its colour and a reason. A file is saved in the `out` folder.

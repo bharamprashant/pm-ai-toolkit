@@ -1,8 +1,10 @@
 """Email notifications for the status agent. Approval-gated, dry-run by default.
 
-Two commands (add --via slack or --via both to also post to Slack; see slack_notify.py):
+Three commands (add --via slack or --via both to also post to Slack; see slack_notify.py):
 
   review-request  Tell the approver a DRAFT is waiting (sent to the approver only, draft attached).
+  remind          If a draft is still unapproved after N hours, remind the approver; after M hours, escalate
+                  (headline only) to the configured escalation contact. Safe to run repeatedly.
   publish         After a report is APPROVED: email the stakeholders (exec or team view) and send a
                   check-in to the owner of every RED or AMBER workstream.
 
@@ -35,7 +37,9 @@ from email.message import EmailMessage
 from email.utils import formataddr, formatdate, make_msgid
 from pathlib import Path
 
-from core.audit import AuditLog, fingerprint, verify_approved
+from datetime import datetime, timezone
+
+from core.audit import AuditLog, fingerprint, read_log, verify_approved
 
 EMAIL_RE = re.compile(r"^[^@\s<>,;\"']+@[^@\s<>,;\"']+\.[^@\s<>,;\"']+$")
 COLOURS = {"RED": "#b03a2e", "AMBER": "#b9770e", "GREEN": "#1e8449"}
@@ -138,6 +142,13 @@ def load_config(path: str | Path) -> dict:
     problems: list[str] = []
     ap = cfg.get("approver") or {}
     _check_addr("approver", ap.get("name"), ap.get("email"), problems)
+    esc = cfg.get("escalation")
+    if esc is not None:
+        _check_addr("escalation", esc.get("name"), esc.get("email"), problems)
+    for key in ("after_hours", "escalate_after_hours"):
+        v = (cfg.get("reminders") or {}).get(key)
+        if v is not None and (not isinstance(v, (int, float)) or v <= 0):
+            problems.append(f"reminders.{key} must be a positive number of hours")
     for i, s in enumerate(cfg.get("stakeholders", [])):
         _check_addr(f"stakeholders[{i}]", s.get("name"), s.get("email"), problems)
         if s.get("audience") not in AUDIENCES:
@@ -284,6 +295,105 @@ def publish_messages(rep: Report, cfg: dict, sender: str) -> tuple[list[tuple[st
     return out, skipped
 
 
+# ----------------------------------------------------------------------------------- reminders
+def _hours(h: float) -> str:
+    return f"{h:.0f}" if abs(h - round(h)) < 0.05 else f"{h:.1f}"
+
+
+def due_reminders(entries: list[dict], draft_name: str, now: datetime, after: float, escalate_after: float,
+                  has_escalation: bool) -> tuple[list[int], float, str]:
+    """Decide which reminder levels are due. Returns (levels, hours_waiting, note).
+
+    Level 1 goes to the approver, level 2 (escalation) to the escalation contact. Nothing is due once the draft is
+    approved, and a level that was already really sent (email or Slack) is never sent twice.
+    """
+    created = [e for e in entries if e.get("action") == "draft_created" and e.get("draft") == draft_name]
+    if not created:
+        raise ValueError(f"no draft_created record for {draft_name} in the audit log")
+    if any(e.get("action") == "approved" and e.get("draft") == draft_name for e in entries):
+        return [], 0.0, "already approved; no reminder needed"
+    hours = (now - datetime.fromisoformat(created[-1]["ts"])).total_seconds() / 3600
+    sent = {e.get("kind") for e in entries
+            if e.get("action") in ("email_sent", "slack_sent") and e.get("report") == draft_name}
+    levels = []
+    if hours >= after and not ({"reminder_1", "slack_reminder"} & sent):
+        levels.append(1)
+    if hours >= escalate_after:
+        if not has_escalation:
+            return levels, hours, "escalation is due but no escalation contact is configured"
+        if not ({"reminder_2", "slack_escalation"} & sent):
+            levels.append(2)
+    return levels, hours, ""
+
+
+def reminder_messages(rep: Report, cfg: dict, sender: str, draft_name: str, level: int, hours: float) -> list[tuple[str, EmailMessage]]:
+    ap = cfg["approver"]
+    final_name = draft_name.replace("DRAFT", "FINAL")
+    if level == 1:
+        intro = (f"The draft status report has been waiting {_hours(hours)} hours for your approval, and the stakeholders have not "
+                 f"been updated yet. Read it, approve it, then publish: python -m modules.m01_status_agent.run --approve out/{draft_name} "
+                 f"--approver \"{ap['name']}\" and python -m modules.m01_status_agent.notify publish --final out/{final_name} --via both --send")
+        view = Report(rep.program, rep.as_of, None, None, rep.generated_by, rep.rows, rep.decisions)
+        subject = f"[Reminder] Draft awaiting your approval: {rep.program} {rep.as_of} ({rep.headline()})"
+        msg = _message(sender, ap["name"], ap["email"], subject, render_text(view, "team", intro), render_html(view, "team", intro))
+        return [("reminder_1", msg)]
+    esc = cfg["escalation"]
+    text = (f"{rep.program} status {rep.as_of}: the draft status report has been waiting {_hours(hours)} hours for approval "
+            f"by {ap['name']}, so stakeholders have not received this week's update.\n\nOverall in the draft: {rep.headline()}.\n\n"
+            f"Please contact {ap['name']} ({ap['email']}) or arrange another approver. You are receiving this because you are "
+            "the configured escalation contact. The report itself has not been shared with you.\n")
+    body = (f"<div style=\"font-family:Segoe UI,Arial,sans-serif;font-size:14px;max-width:640px\"><p><b>{html.escape(rep.program)} status "
+            f"{html.escape(rep.as_of)}</b>: the draft status report has been waiting {_hours(hours)} hours for approval by "
+            f"{html.escape(ap['name'])}, so stakeholders have not received this week's update.</p><p>Overall in the draft: "
+            f"<b>{html.escape(rep.headline())}</b>.</p><p>Please contact {html.escape(ap['name'])} "
+            f"(<a href=\"mailto:{html.escape(ap['email'])}\">{html.escape(ap['email'])}</a>) or arrange another approver. You are receiving "
+            "this because you are the configured escalation contact. The report itself has not been shared with you.</p></div>")
+    subject = f"[Escalation] {rep.program} status {rep.as_of} is unapproved after {_hours(hours)}h"
+    return [("reminder_2", _message(sender, esc["name"], esc["email"], subject, text, body, (ap["name"], ap["email"])))]
+
+
+def _remind(a, cfg: dict, log: AuditLog, out: Path) -> int:
+    path = Path(a.draft)
+    text = path.read_text(encoding="utf-8")
+    rep = parse_report(text)
+    if rep.approved_by:
+        print("note: this report is already approved; no reminder needed")
+        return 0
+    rcfg = cfg.get("reminders") or {}
+    after = a.after_hours if a.after_hours is not None else rcfg.get("after_hours", 2)
+    esc_after = a.escalate_after_hours if a.escalate_after_hours is not None else rcfg.get("escalate_after_hours", 4)
+    now = datetime.fromisoformat(a.now) if a.now else datetime.now(timezone.utc)
+    try:
+        levels, hours, note = due_reminders(read_log(out / "audit.jsonl"), path.name, now, after, esc_after, "escalation" in cfg)
+    except ValueError as exc:
+        print(f"REFUSED: {exc}", file=sys.stderr)
+        return 2
+    if note:
+        print("note:", note)
+    if not levels:
+        print(f"no reminder due ({_hours(hours)}h since the draft was created)")
+        return 0
+    use_email, use_slack = a.via in ("email", "both"), a.via in ("slack", "both")
+    sender = os.environ.get("SMTP_FROM") or "pm-ai-toolkit@example.invalid"
+    sha = fingerprint(text)
+    mode = "sent" if a.send else f"prepared (dry run, nothing sent) in {out / 'outbox'}"
+    failed_total = 0
+    for level in levels:
+        if use_email:
+            ok, failed = deliver(reminder_messages(rep, cfg, sender, path.name, level, hours), path.name, sha, log, out / "outbox", a.send)
+            print(f"reminder level {level}: {ok} email(s) {mode}; {failed} failed")
+            failed_total += failed
+        if use_slack:
+            from modules.m01_status_agent import slack_notify
+            ok, failed, notes = slack_notify.deliver(slack_notify.reminder_items(rep, cfg, path.name, level, hours), path.name, sha,
+                                                    log, out / "outbox", a.send, os.environ)
+            print(f"reminder level {level}: {ok} Slack message(s) {mode}; {failed} failed")
+            for n in notes:
+                print("note:", n)
+            failed_total += failed
+    return 1 if failed_total else 0
+
+
 # ----------------------------------------------------------------------------------- delivery
 def _smtp_settings() -> dict:
     missing = [k for k in ("SMTP_HOST", "SMTP_FROM") if not os.environ.get(k)]
@@ -352,10 +462,21 @@ def main(argv=None) -> int:
                         help="where to send; default email")
         sp.add_argument("--send", action="store_true",
                         help="really send; default is to write .eml / .json files only")
+    rp = sub.add_parser("remind", help="remind the approver (and optionally an escalation contact) about an unapproved draft")
+    rp.add_argument("--draft", required=True)
+    rp.add_argument("--config", default="config/stakeholders.json")
+    rp.add_argument("--out", default="out")
+    rp.add_argument("--via", choices=["email", "slack", "both"], default="email")
+    rp.add_argument("--send", action="store_true")
+    rp.add_argument("--after-hours", type=float, default=None, help="first reminder after this many hours (default 2)")
+    rp.add_argument("--escalate-after-hours", type=float, default=None, help="escalate after this many hours (default 4)")
+    rp.add_argument("--now", default=None, help=argparse.SUPPRESS)
     a = p.parse_args(argv)
     out = Path(a.out)
     log = AuditLog(out / "audit.jsonl")
     cfg = load_config(a.config)
+    if a.cmd == "remind":
+        return _remind(a, cfg, log, out)
     sender = os.environ.get("SMTP_FROM") or "pm-ai-toolkit@example.invalid"
     use_email, use_slack = a.via in ("email", "both"), a.via in ("slack", "both")
     skipped: list[str] = []

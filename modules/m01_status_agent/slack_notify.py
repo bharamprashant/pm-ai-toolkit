@@ -9,6 +9,7 @@ Same rules as email (see notify.py):
 Two webhooks, so a draft can never land in the stakeholder channel by accident:
   SLACK_REVIEW_WEBHOOK_URL   where "draft ready for review" goes (the approver's private channel); no fallback
   SLACK_WEBHOOK_URL          where the APPROVED report goes (the stakeholder channel)
+  SLACK_ESCALATION_WEBHOOK_URL   optional: where an unapproved-draft escalation goes (headline only)
 
 All text that comes from tickets or the model is escaped, so a comment containing <!channel> or <https://...|link>
 shows as plain text and cannot ping the workspace.
@@ -30,6 +31,7 @@ from modules.m01_status_agent.notify import Report
 ICON = {"RED": ":red_circle:", "AMBER": ":large_orange_circle:", "GREEN": ":large_green_circle:"}
 MAX_SECTION = 2800        # Slack allows 3000 characters in a section; keep headroom
 MAX_BLOCKS = 50           # Slack's limit per message
+OPTIONAL_KINDS = {"slack_review_request", "slack_reminder", "slack_escalation"}
 SLACK_ID_RE = re.compile(r"^[UW][A-Z0-9]{6,}$")
 
 
@@ -129,6 +131,40 @@ def review_payload(rep: Report, draft_name: str, approver_name: str) -> dict:
     return {"text": f"[Review needed] {rep.program} status {rep.as_of} (draft: {rep.headline()})", "blocks": _cap(blocks)}
 
 
+def _hrs(h: float) -> str:
+    return f"{h:.0f}" if abs(h - round(h)) < 0.05 else f"{h:.1f}"
+
+
+def reminder_payload(rep: Report, draft_name: str, approver_name: str, hours: float) -> dict:
+    final_name = draft_name.replace("DRAFT", "FINAL")
+    approve_cmd = f'python3 -m modules.m01_status_agent.run --approve out/{draft_name} --approver "{approver_name}"'
+    publish_cmd = f"python3 -m modules.m01_status_agent.notify publish --final out/{final_name} --via both --send"
+    blocks = [
+        {"type": "header", "text": {"type": "plain_text", "text": _trunc(f"Reminder: {rep.program} status {rep.as_of} is unapproved", 140)}},
+        _section(f"The draft has been waiting *{_hrs(hours)} hours* for approval and stakeholders have not been updated.\n" + _overall(rep)),
+        _section("*To finish (a person does these)*\n1. Approve:\n```" + approve_cmd + "```\n2. Publish:\n```" + publish_cmd + "```"),
+        _context("DRAFT - not approved. Do not forward."),
+    ]
+    return {"text": f"[Reminder] {rep.program} status {rep.as_of} awaiting approval ({_hrs(hours)}h)", "blocks": blocks}
+
+
+def escalation_payload(rep: Report, approver_name: str, hours: float) -> dict:
+    blocks = [
+        {"type": "header", "text": {"type": "plain_text", "text": _trunc(f"Escalation: {rep.program} status {rep.as_of} unapproved", 140)}},
+        _section(f"The draft status report has been waiting *{_hrs(hours)} hours* for approval by {esc(approver_name)}, so stakeholders "
+                 f"have not received this week's update.\nOverall in the draft: {esc(rep.headline())}.\nPlease contact the approver or "
+                 "arrange another one. The report itself has not been shared here."),
+        _context("DRAFT - not approved. Sent because this channel is the configured escalation channel."),
+    ]
+    return {"text": f"[Escalation] {rep.program} status {rep.as_of} unapproved after {_hrs(hours)}h", "blocks": blocks}
+
+
+def reminder_items(rep: Report, cfg: dict, draft_name: str, level: int, hours: float) -> list[tuple[str, dict, str]]:
+    if level == 1:
+        return [("slack_reminder", reminder_payload(rep, draft_name, cfg["approver"]["name"], hours), "SLACK_REVIEW_WEBHOOK_URL")]
+    return [("slack_escalation", escalation_payload(rep, cfg["approver"]["name"], hours), "SLACK_ESCALATION_WEBHOOK_URL")]
+
+
 def review_items(rep: Report, cfg: dict, draft_name: str) -> list[tuple[str, dict, str]]:
     return [("slack_review_request", review_payload(rep, draft_name, cfg["approver"]["name"]), "SLACK_REVIEW_WEBHOOK_URL")]
 
@@ -162,8 +198,9 @@ def deliver(items: list[tuple[str, dict, str]], report_name: str, report_sha: st
     for kind, payload, env in items:
         url = environ.get(env)
         if not url:
-            if kind == "slack_review_request":
-                notes.append(f"Slack review request skipped: {env} is not set (the draft is never posted to the stakeholder channel)")
+            if kind in OPTIONAL_KINDS:
+                notes.append(f"Slack {kind.replace('slack_', '').replace('_', ' ')} skipped: {env} is not set "
+                             "(drafts and reminders are never posted to the stakeholder channel)")
                 continue
             raise RuntimeError(f"to post to Slack, set environment variable {env} to your Slack incoming-webhook URL")
         try:

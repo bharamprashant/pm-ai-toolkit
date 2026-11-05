@@ -77,6 +77,8 @@ Nothing is scheduled until you set it up (7.5). The times below are the recommen
 | 08:00 - 10:00 | the approver | reads the draft, approves it with their name |
 | right after approval | the approver | runs `notify publish --via both --send` |
 | immediately | the tool | refuses anything unapproved or edited; otherwise emails the sponsor and steering group (exec view), emails the delivery lead (full view), posts to the stakeholder Slack channel, and asks each Red or Amber owner for a check-in |
+| 10:00 | the reminder schedule | if the draft is still unapproved 2 hours after it was created, nudges **the approver only** (email and/or private Slack) with the exact commands |
+| 12:00 | the reminder schedule | if still unapproved 4 hours after creation, sends the configured **escalation contact** a short note: the headline counts and who is being waited for. The report itself is not shared |
 | later that day | owners | reply with cause, recovery plan and date; replies go to the approver by email, or in the Slack thread |
 
 Time zones for CI: GitHub schedules use UTC and ignore daylight saving. 08:00 in Stockholm is 07:00 UTC in winter (CET) and
@@ -98,7 +100,7 @@ publish step (a person runs it)   verifies the approval and that the file is unc
    |  - asks the owner of every RED or AMBER workstream for a check-in (email, and an @mention in Slack)
 ```
 The scheduled run never approves and never messages stakeholders. That is deliberate: nothing reaches other people
-until a named person has approved it. A reminder when a draft stays unapproved is not built yet.
+until a named person has approved it. Reminders (7.7) only nag the approver and, later, tell an escalation contact that a report is late.
 
 ### 7.2 Set up the recipients
 1. `cp config/stakeholders.example.json config/stakeholders.json`
@@ -141,6 +143,31 @@ will skip the run, so use an always-on machine or the CI option.
 
 CI option: copy `automation/weekly-status.yml.example` to `.github/workflows/`, add the secrets listed in it, and keep the human
 approval step. GitHub schedules run in UTC and can start a few minutes late.
+
+### 7.7 Reminders and escalation for an unapproved draft
+`run_reminder.sh` finds today's draft in `out/` and runs `notify remind`. It decides from the audit log, not from the clock alone:
+
+| Condition | What happens |
+|---|---|
+| draft is already approved, or younger than `after_hours` (default 2) | nothing is sent |
+| older than `after_hours` | **level 1**: reminder to the approver, with the approve and publish commands |
+| older than `escalate_after_hours` (default 4) | **level 2**: to the escalation contact (`escalation` in the config): headline counts and the approver's name only, and the message says the report "has not been shared with you" |
+| a level was already really sent | not repeated (dry runs never count, so testing does not block the real reminder) |
+
+Slack uses `SLACK_REVIEW_WEBHOOK_URL` for level 1 and the optional `SLACK_ESCALATION_WEBHOOK_URL` for level 2; a missing one is skipped with a note, never rerouted to the stakeholder channel.
+Set the thresholds in `config/stakeholders.json` (`reminders`) or with `--after-hours` / `--escalate-after-hours`.
+
+Try it with no mail server (the `--now` flag moves the clock so you can see each level):
+```bash
+python3 -m modules.m01_status_agent.notify remind --draft out/status_DATE_DRAFT.md --via both --now 2026-03-27T10:30:00+00:00
+```
+Schedule it with the same persistent `out/` folder as the morning run, for example:
+```
+CRON_TZ=Europe/Stockholm
+0 10,12 * * 1-5  OUT_DIR=/path/to/out SEND_EMAIL=1 /path/to/pm-ai-toolkit/modules/m01_status_agent/run_reminder.sh
+```
+It needs the same environment variables as 7.4 and 7.6 set inside the job. It cannot work in the stateless CI template, because a fresh CI runner
+has no draft and no log to look at. Reminders go out whether or not anyone is reachable; they do not replace a deputy approver.
 
 ### 7.6 Slack: set it up (about 10 minutes)
 Slack messages go through an **Incoming Webhook**: no bot token, no OAuth, and the tool can only post, never read.
@@ -220,4 +247,6 @@ A correct run prints six workstreams, shows no "(fallback)" marks unless the mod
 | Section 7.4 real sending | **simulated server in unit tests only; not tested against a real mail server** |
 | Section 7.6 Slack payloads, escaping, webhook checks, dry run | yes (unit tests and an end-to-end dry run) |
 | Section 7.6 posting to a real Slack workspace | **no - simulated HTTP call in unit tests only** |
+| Section 7.7 reminder levels, de-duplication, escalation privacy (unit tests and a simulated-clock dry run) | yes |
+| Section 7.7 real sending of reminders, and the reminder cron line | **no - untested against a real server or scheduler** |
 | Section 7.5 cron line and CI template | **no - untested** |
