@@ -8,6 +8,8 @@ Ready-to-run AI building blocks for program and project managers. Every module c
 contract, a human approval gate and a step-by-step setup guide. It is built to show **how the AI works**, not just
 that it exists: you can read the code, run it, break it, and measure it.
 
+**New here?** Read [docs/WHAT_IS_THIS.md](docs/WHAT_IS_THIS.md): what the project and this repository are, a worked example from the sample data, who it is best for, and what it does not do.
+
 ## What problem does it solve?
 
 Writing the weekly status report from a ticket export is slow, and the two obvious shortcuts both fail. Ask a model
