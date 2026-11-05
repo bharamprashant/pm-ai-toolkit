@@ -13,6 +13,8 @@ Jira CSV / API --> facts.py (counts, dates, lists) --> model or rule baseline
                                                                     every step --> audit.jsonl
 ```
 
+**Scheduling and email:** `run_scheduled.sh` runs the pipeline at a fixed time and emails only the approver; after a person approves, `notify publish` emails stakeholders (exec or team view) and a check-in to each Red or Amber workstream owner. It refuses unapproved or edited reports and is a dry run unless `--send` is given. See SETUP.md section 7.
+
 **Step-by-step automation setup:** see [SETUP.md](SETUP.md) (prerequisites, credentials, Jira field mapping, scheduling, governance checklist, troubleshooting and which steps are still untested).
 
 ## Run it (no key needed)

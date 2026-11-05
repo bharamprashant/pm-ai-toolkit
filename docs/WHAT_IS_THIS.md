@@ -65,7 +65,7 @@ the project is built so you can measure it the moment you connect one.
 | **A program or project manager** | Draft your weekly report faster, with ticket-level evidence | A reviewable first draft in seconds. Time saved is not yet measured |
 | **A PMO lead** | Decide how your PMO will introduce AI helpers safely | A ready agent contract, approval gate, audit log and a setup standard to copy |
 | **A manager or sponsor** | Understand why a workstream is Amber | Each colour comes with a reason that points at specific tickets |
-| **Someone learning AI for PM work** | See a real, small, testable AI system end to end | Readable code, 10 tests, an evaluation, and honest notes on what failed first |
+| **Someone learning AI for PM work** | See a real, small, testable AI system end to end | Readable code, 24 tests, an evaluation, and honest notes on what failed first |
 | **A team choosing an AI model or prompt** | Compare options on evidence | A repeatable eval with a confusion matrix, so a change can be judged, not felt |
 | **An interviewer or recruiter** | See that the author built and understands the AI, not just used it | Working code, tests, disclosed bugs, documented limits |
 | **A builder who wants to extend it** | Start a new PM helper on a proven pattern | The module structure and setup standard to follow |
@@ -83,7 +83,7 @@ the project is built so you can measure it the moment you connect one.
 
 ## 7. What it does NOT do (so you are not surprised)
 
-- It does **not** write to Jira, send messages, or publish anything on its own.
+- It does **not** write to Jira, approve its own report, or email stakeholders on its own. A scheduled run stops at a draft and emails only the approver; a person approves and then runs the publish step.
 - It does **not** replace your judgment. A RED still needs a human decision.
 - It only sees what is in the export. A conversation that never reached a ticket is invisible to it.
 - The Jira connector and the live-model path have **not** been run against real services yet.

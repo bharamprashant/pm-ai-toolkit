@@ -50,7 +50,7 @@ Step 2. Run the tests.
 ```bash
 python3 -m pytest -q
 ```
-Expected: `10 passed`
+Expected: `24 passed`
 
 Step 3. Produce a status report.
 ```bash
@@ -109,13 +109,25 @@ Open an issue or tell the author. The full click-by-click version is in
    Optionally set `PM_AI_MODEL` to choose the model (default `claude-sonnet-5-5`).
 7. Re-run the eval with the live model before trusting it. A model that has not been evaluated is a guess.
 
-## Part E. Schedule it
+## Part E. Schedule it and email the right people
 
-Local weekly run, Monday 08:00: add `0 8 * * 1  JIRA_JQL='project = ABC' /path/to/pm-ai-toolkit/modules/m01_status_agent/run_weekly.sh`
-to `crontab -e` (untested). Cron does not inherit your terminal's environment, so the Jira variables from Part D must
-be provided inside the cron job or a wrapper script that only you can read; if they are missing you get the
-`KeyError` from Troubleshooting 3. Or copy `modules/m01_status_agent/automation/weekly-status.yml.example` into `.github/workflows/`
-and add secrets in the repo settings. Either way the schedule produces a **DRAFT only**. A person approves it.
+The full guide is section 7 of [`modules/m01_status_agent/SETUP.md`](../modules/m01_status_agent/SETUP.md). In short:
+
+1. **A scheduled run** at a fixed time (for example weekdays at 08:00) pulls the data, drafts the report and emails **only the approver**.
+2. **A person approves** the draft with their name.
+3. **A person runs the publish step**, which refuses anything unapproved or edited and then emails the sponsor and steering group a
+   short view, the delivery lead the full view, and every owner of a RED or AMBER workstream a check-in.
+
+Try it with no mail server (writes `.eml` files you can open):
+```bash
+cp config/stakeholders.example.json config/stakeholders.json      # then edit; this file is git-ignored
+INPUT_CSV=data/synthetic/snapshots/2026-03-20.csv AS_OF_DATE=2026-03-20 modules/m01_status_agent/run_scheduled.sh
+python3 -m modules.m01_status_agent.run --approve out/status_2026-03-20_DRAFT.md --approver "Your Name"
+python3 -m modules.m01_status_agent.notify publish --final out/status_2026-03-20_FINAL.md
+```
+Real sending needs `SMTP_HOST` and `SMTP_FROM` in the environment plus `--send`. Cron does not inherit your terminal's
+environment, so set the variables inside the job (cron example in SETUP.md 7.5). The scheduling and real-send steps have not
+been run against a real server or a real scheduler yet.
 
 ---
 
@@ -138,10 +150,12 @@ and add secrets in the repo settings. Either way the schedule produces a **DRAFT
 | 13 | A report row ends with "(fallback)" | The model cited a ticket that is not in the data, or returned an invalid RAG, so the verifier rejected it and used the rule baseline | This is the safety net working. The reason is at the end of that row's text in the report (`out/audit.jsonl` lists only which workstreams were rejected). Tighten the prompt, re-run the eval |
 | 14 | Eval accuracy differs from 87.5% | You changed a threshold in `facts.py`, the prompt, or the data | Expected. The 87.5% belongs to the committed thresholds and data |
 | 15 | `out/` files do not appear in git | `out/` is in `.gitignore` on purpose | Reports and the audit log stay local. Do not commit data from a real program |
+| 16 | `REFUSED: ...` when publishing (reproduced) | the report is a draft, was never approved in this `out/` folder, or was edited after approval | approve the draft, publish the FINAL file that approval created, never edit a FINAL file |
+| 17 | `to send for real, set environment variable(s): SMTP_HOST, SMTP_FROM` (reproduced) | `--send` without mail settings | set them (SETUP.md 7.4) or drop `--send` for a dry run |
 
 ## Safety rules while setting up
 
 - Use synthetic data or data you are explicitly allowed to use. The repo ships only fictional data.
 - Never commit a token. `.env`, `.env.*` and `*.token` are already in `.gitignore`, but check `git status` before every commit.
 - Use a Jira token from an account with **read-only** access. The connector only sends GET requests.
-- Nothing in this repo writes to Jira, sends messages, or publishes a report as final.
+- Nothing in this repo writes to Jira or publishes a report as final. Email goes out only for an approved, unchanged report, only to people in your config file, and only when you pass `--send`.

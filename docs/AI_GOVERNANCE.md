@@ -21,7 +21,10 @@ any regulation or standard.
 | 5 | Named approver | Approval fails with an empty or blank name; the final file is stamped with the approver and UTC time | ENFORCED IN CODE (name only, see 3.2) | `core/audit.py` `approve()` |
 | 6 | Audit log | Draft creation and approval are written as one JSON line each, with actor, UTC time and a content fingerprint | BY DESIGN (see 4.2) | `core/audit.py` |
 | 7 | Read-only Jira access | The connector only issues GET requests and never writes to Jira | ENFORCED IN CODE (the token's real permissions are yours to limit) | `jira_client.py` |
-| 8 | No auto-publish | Nothing is sent, posted or written to a system of record by the agent | ENFORCED IN CODE | whole module |
+| 8 | No auto-publish | The agent never writes to a system of record and never approves its own report. A scheduled run stops at a draft and only emails the approver | ENFORCED IN CODE | whole module |
+| 8a | Approval-gated email | `notify publish` refuses a report that is a draft, has no approval record in the log, or was edited after approval (fingerprint check). Nothing is sent without `--send`; the default writes `.eml` files for inspection | ENFORCED IN CODE | `notify.py`, `core/audit.py` `verify_approved()` |
+| 8b | Recipient allow-list | Email goes only to addresses in `config/stakeholders.json`, which is validated (bad addresses and header-injection attempts are rejected) and git-ignored | ENFORCED IN CODE | `notify.py` `load_config()` |
+| 8c | Credentials only in environment | SMTP settings come from environment variables; unencrypted sending is refused; error text is never logged | ENFORCED IN CODE | `notify.py` |
 | 9 | Agent contract | Purpose, owner, allowed and forbidden actions, human decisions, stop conditions, review cadence | POLICY ONLY | `AGENT_CONTRACT.md` |
 | 10 | Evaluation before trust | A scored test on labelled cases, to be re-run after any prompt, threshold or model change | BY DESIGN (re-running is up to you) | `eval/run_eval.py` |
 | 11 | Evidence tags | Every published number is tagged measured, modeled or hypothetical | POLICY ONLY | README |
@@ -63,7 +66,7 @@ draft, why a human reads it, and why the evaluation exists. Live-model accuracy 
 - **No automatic check that the draft is unchanged.** The log stores the fingerprint at creation and again at approval,
   but nothing compares them for you. If someone edits the draft in between, the fingerprints will differ, and only a
   person comparing the two log lines would notice.
-- **Approved files can be edited afterwards.** There is no signature or lock on the final file.
+- **Approved files can be edited afterwards, but this is now detected before any email.** The log stores a fingerprint of the approved file (`final_sha`), and `publish` refuses a file that no longer matches. Someone who can edit both the file and the log could still defeat this.
 
 ### 3.3 How to get real authority control in practice (recommended, not built)
 | Gap | Practical way to close it today |
@@ -72,7 +75,7 @@ draft, why a human reads it, and why the evaluation exists. Live-model accuracy 
 | No separation of duties | Require that the approver is a different person from the one who ran the draft |
 | No per-RED acceptance | Have the approver record each RED decision as a comment on the review, or extend the code to ask per RED |
 | Draft edited before approval | Compare `sha` in the `draft_created` log line with `draft_sha` in the `approved` line |
-| Final edited afterwards | Store finals in a location with write protection or version history |
+| Final edited afterwards | Detected automatically before email (fingerprint). Still keep finals in write-protected or versioned storage |
 
 ## 4. The audit trail
 
@@ -80,8 +83,11 @@ draft, why a human reads it, and why the evaluation exists. Live-model accuracy 
 | Event | Written when | Fields |
 |---|---|---|
 | `draft_created` | a report is generated | time (UTC), actor (`agent:offline-baseline` or `agent:anthropic:<model>`), draft file, fingerprint, list of workstreams the verifier rejected |
-| `approved` | a draft is approved | time (UTC), approver name, draft file, final file, fingerprint of the approved draft |
+| `approved` | a draft is approved | time (UTC), approver name, draft file, final file, fingerprint of the approved draft and of the final file |
 | `jira_export_readonly` | a Jira export is made | time (UTC), actor `system`, output file |
+| `email_prepared` | a dry run writes an `.eml` file | time (UTC), kind, recipient, subject, report file and fingerprint |
+| `email_sent` | an email is really sent | same fields as above |
+| `email_failed` | a send fails | time (UTC), kind, recipient, error class only (never the error text) |
 
 ### 4.2 What is not recorded, and how strong the log is
 - **Not recorded:** the prompt text or version, the input data fingerprint, the rejection reason (it is in the report row,
@@ -97,6 +103,7 @@ draft, why a human reads it, and why the evaluation exists. Live-model accuracy 
 |---|---|
 | Offline (default) | **Nothing.** The rule baseline runs locally |
 | `--live` | The workstream name, counts, ticket keys, due and stale lists, and the **text of open-item comments** go to the Anthropic API |
+| Email (`--send`) | The report text and recipient addresses go to **your** mail server (SMTP) using your own credentials |
 | `--live`, never sent | your Jira token and email, ticket summaries and assignee names (the code does not include them in the model request) |
 | Jira export | Read-only GET requests to your own Jira site |
 
@@ -107,7 +114,7 @@ provider, and check what your comments contain. The repository ships fictional d
 ## 6. Human decisions the tool never takes
 
 From the agent contract: approving a report, accepting a RED, and agreeing escalation and recovery plans. The tool also
-never changes dates, owners or priorities, never writes to Jira or any system of record, and never sends a message.
+never changes dates, owners or priorities, and never writes to Jira or any system of record. It does send email, but only (a) a review request to the named approver, and (b) after a person has approved and run the publish command with `--send`, the approved report to the configured stakeholders and a check-in to each RED or AMBER workstream owner.
 
 ## 7. Known risks and how each is handled
 
@@ -119,6 +126,10 @@ never changes dates, owners or priorities, never writes to Jira or any system of
 | Model over-alarms (false RED) | Human review; the eval's confusion matrix | Live-model false-alarm rate unknown |
 | Someone approves without reading | Draft status and the Decisions section make the ask visible | Cannot be prevented by software; needs a review habit |
 | Someone approves under another person's name | Not prevented by the tool | Needs login-based approval, see 3.3 |
+| A wrong or unapproved report reaches stakeholders | `publish` refuses drafts and edited files; the dry run lets a person read the exact emails first; `--send` is explicit | A person can still approve a wrong report and run `--send` |
+| Email goes to the wrong person | Recipients come only from the validated config file | A mistake in the config file itself; review it before first use |
+| Recipient addresses (personal data) sit in files | Config and `out/` are git-ignored; the log stores recipient addresses | Protect the folder; do not commit it; delete the log per your retention rules |
+| Check-in emails sound like instructions from the AI | Sent in the approver's name as Reply-To; each says it comes from an approved report | Tone and need for a check-in are still the approver's call |
 | Log edited after the fact | Not prevented by the tool | Needs write-once storage |
 | Confidential comments sent to a provider | `--live` is opt-in; offline mode is the default | Your approval and data checks |
 | Prompt or threshold changed and quality drops | Re-run the eval after every change | Relies on discipline; not automated |
@@ -148,6 +159,8 @@ Mapping the controls to the PMI AI standard and the EU AI Act in detail is a pla
 - [ ] Someone other than the person who generated the draft will approve it, and I have a way to know who they are.
 - [ ] I run the evaluation before the first real use and after any change to the prompt, thresholds or model.
 - [ ] I compare the draft and approval fingerprints, or my process makes that unnecessary.
+- [ ] I ran `notify publish` as a dry run and read the emails before the first `--send`.
+- [ ] `config/stakeholders.json` lists only people who should receive this report, and the folder is access-controlled.
 - [ ] The audit log is kept somewhere it cannot be quietly edited.
 - [ ] Every RED has a named human decision attached.
 

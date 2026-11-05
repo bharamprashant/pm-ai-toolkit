@@ -1,0 +1,17 @@
+{
+  "_note": "Copy to config/stakeholders.json (git-ignored) and replace the example.com addresses. Never commit real addresses.",
+  "approver": { "name": "Program Manager", "email": "pm@example.com" },
+  "stakeholders": [
+    { "name": "Sponsor",          "email": "sponsor@example.com",   "audience": "exec" },
+    { "name": "Steering member",  "email": "steerco@example.com",   "audience": "exec" },
+    { "name": "Delivery lead",    "email": "delivery@example.com",  "audience": "team" }
+  ],
+  "workstream_owners": {
+    "KYC":          { "name": "KYC owner",          "email": "kyc-owner@example.com" },
+    "Payments":     { "name": "Payments owner",     "email": "payments-owner@example.com" },
+    "Data-Sharing": { "name": "Data-Sharing owner", "email": "datasharing-owner@example.com" },
+    "Collections":  { "name": "Collections owner",  "email": "collections-owner@example.com" },
+    "Reporting":    { "name": "Reporting owner",    "email": "reporting-owner@example.com" },
+    "Compliance":   { "name": "Compliance owner",   "email": "compliance-owner@example.com" }
+  }
+}
