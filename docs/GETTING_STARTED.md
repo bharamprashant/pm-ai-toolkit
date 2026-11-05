@@ -135,7 +135,7 @@ and add secrets in the repo settings. Either way the schedule produces a **DRAFT
 | 10 | HTTP 401 or 403 from Jira (not yet tested live) | Wrong email, expired token, or no permission on the project | Recreate the token, check the account can browse the project |
 | 11 | Every workstream shows "Unassigned" (not yet tested live) | Issues have no Components | Add components, one per workstream, or change the mapping in `jira_client.py` |
 | 12 | Story points all show 0 (not yet tested live) | Your site uses a different custom field id | Find it at `https://<site>/rest/api/3/field` and edit `FIELDS` and `to_rows` in `jira_client.py` |
-| 13 | A report row ends with "(fallback)" | The model cited a ticket that is not in the data, or returned an invalid RAG, so the verifier rejected it and used the rule baseline | This is the safety net working. Read `out/audit.jsonl` for the reason, tighten the prompt, re-run the eval |
+| 13 | A report row ends with "(fallback)" | The model cited a ticket that is not in the data, or returned an invalid RAG, so the verifier rejected it and used the rule baseline | This is the safety net working. The reason is at the end of that row's text in the report (`out/audit.jsonl` lists only which workstreams were rejected). Tighten the prompt, re-run the eval |
 | 14 | Eval accuracy differs from 87.5% | You changed a threshold in `facts.py`, the prompt, or the data | Expected. The 87.5% belongs to the committed thresholds and data |
 | 15 | `out/` files do not appear in git | `out/` is in `.gitignore` on purpose | Reports and the audit log stay local. Do not commit data from a real program |
 

@@ -87,7 +87,7 @@ A correct run prints six workstreams, shows no "(fallback)" marks unless the mod
 | HTTP 401 / 403 from Jira | wrong email, expired token or no project access | recreate the token; check project permissions |
 | Every workstream shows "Unassigned" | issues have no Components | add components or change the mapping |
 | Story points all 0 | different custom field id | see section 6 |
-| "(fallback)" in the report | the model cited a ticket not in the data, or an invalid RAG | read `audit.jsonl`; tighten the prompt; re-run the eval |
+| "(fallback)" in the report | the model cited a ticket not in the data, or an invalid RAG | read the rejection reason at the end of that row's text in the report (`audit.jsonl` lists only which workstreams were rejected); tighten the prompt; re-run the eval |
 | `ANTHROPIC_API_KEY is not set` | `--live` without a key | export the key or drop `--live` |
 
 ## 11. Status of this guide

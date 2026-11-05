@@ -8,6 +8,8 @@ Ready-to-run AI building blocks for program and project managers. Every module c
 contract, a human approval gate and a step-by-step setup guide. It is built to show **how the AI works**, not just
 that it exists: you can read the code, run it, break it, and measure it.
 
+**Governance:** how the toolkit checks the AI, who must approve, what is enforced in code versus policy, and the known gaps are in [docs/AI_GOVERNANCE.md](docs/AI_GOVERNANCE.md).
+
 **New here?** Read [docs/WHAT_IS_THIS.md](docs/WHAT_IS_THIS.md): what the project and this repository are, a worked example from the sample data, who it is best for, and what it does not do.
 
 ## What problem does it solve?
