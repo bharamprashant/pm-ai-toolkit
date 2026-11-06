@@ -27,6 +27,19 @@ You receive FACTS computed by code. Rules:
 Return JSON: {"rag": "...", "rationale": "...", "cited_keys": ["..."]}"""
 
 
+# Prompt v2 adds one severity rule. It was written AFTER the first live eval showed the model rating
+# stated-blocker weeks AMBER where the labels say RED, and it is scored on the same 24 cases, so any gain
+# it shows is optimistic (tuned on the test set). Production keeps v1 (SYSTEM) until v2 is validated on new cases.
+SYSTEM_V2 = SYSTEM.replace(
+    "- cited_keys must be",
+    "- Severity: if a comment says a dependency, vendor, environment or decision the work needs is unavailable or\n"
+    "  delayed, and gives no firm date by which it will arrive, rate the workstream RED, not AMBER, even when every\n"
+    "  ticket is on time. If the comment gives a firm date that still leaves the work on time, do not raise it.\n"
+    "- cited_keys must be")
+assert SYSTEM_V2 != SYSTEM
+PROMPTS = {"v1": SYSTEM, "v2": SYSTEM_V2}
+
+
 def _baseline_fn(system: str, user: str) -> dict:
     """Offline stand-in: rule-based RAG. It deliberately cannot read comment text."""
     facts = json.loads(user)["FACTS"]
@@ -59,13 +72,13 @@ def verify(result: dict, facts: WorkstreamFacts) -> tuple[bool, str]:
     return True, "ok"
 
 
-def assess(llm: LLM, facts: WorkstreamFacts) -> dict:
+def assess(llm: LLM, facts: WorkstreamFacts, system: str = SYSTEM) -> dict:
     user = json.dumps({"FACTS": facts.to_dict()}, indent=1)
-    result = llm.complete_json(SYSTEM, user)
+    result = llm.complete_json(system, user)
     ok, reason = verify(result, facts)
     if not ok:
         # Fail safe: never publish an ungrounded judgment. Fall back to the rule baseline, flagged.
-        fb = _baseline_fn(SYSTEM, user)
+        fb = _baseline_fn(system, user)
         fb["rationale"] += f" [fallback: model output rejected - {reason}]"
         fb["verified"] = False
         return fb

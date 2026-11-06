@@ -77,7 +77,7 @@ No coding needed: [docs/FOR_NON_TECHNICAL_USERS.md](docs/FOR_NON_TECHNICAL_USERS
 git clone https://github.com/bharamprashant/pm-ai-toolkit
 cd pm-ai-toolkit
 python3 -m pip install pytest
-python3 -m pytest -q                                   # expect: 51 passed
+python3 -m pytest -q                                   # expect: 54 passed
 python3 -m modules.m01_status_agent.run --input data/synthetic/snapshots/2026-03-20.csv --as-of 2026-03-20
 python3 -m modules.m01_status_agent.eval.run_eval      # expect: RAG accuracy 87.5%
 ```
@@ -117,7 +117,7 @@ data/          synthetic Jira-shaped data generator (seeded, reproducible), snap
 modules/       one folder per module: code, README, SETUP.md, AGENT_CONTRACT.md, eval
 governance/    reusable agent-contract template
 docs/          getting started, how it works, setup standard, idea backlog
-tests/         51 automated tests (run in CI on every push)
+tests/         54 automated tests (run in CI on every push)
 ```
 
 ## Safety

@@ -25,6 +25,7 @@ python -m modules.m01_status_agent.run --approve out/status_2026-03-20_DRAFT.md 
 python -m modules.m01_status_agent.eval.run_eval          # reproduces the numbers below
 ```
 Live model: `pip install anthropic`, set `ANTHROPIC_API_KEY` (and optionally `PM_AI_MODEL`), add `--live`.
+Repeat runs and compare the two prompts: `python3 -m modules.m01_status_agent.eval.run_eval --live --runs 5 --prompt both` (up to 10 runs; 24 model calls per run per prompt; check your Console usage). Prompt v2 adds a severity rule and was written after seeing the first live results, so any gain it shows is optimistic; production uses v1 until v2 is checked on new cases.
 Your own Jira: set `JIRA_BASE_URL`, `JIRA_EMAIL`, `JIRA_API_TOKEN` as environment variables, then
 `--jira-jql 'project = ABC' --export out/jira.csv` (read-only). Never commit a token.
 
