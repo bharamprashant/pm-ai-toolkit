@@ -61,9 +61,9 @@ is the safety net working, not an error.
 
 The eval compares the toolkit's colours with 24 colours decided in advance. 87.5% means it matched 21 of 24. The three
 misses are on purpose: they are cases where the real warning is hidden in a **comment** ("vendor access not available
-before April"), which simple rules cannot read. That is where an AI model is meant to help. A live model was tried once: it
-scored the same 87.5%, caught some of the comment-based warnings (but rated them Amber, not Red), and got one case wrong
-that the rules had right. So on this small sample it did not beat the rules; it made different mistakes. More testing is needed.
+before April"), which simple rules cannot read. That is where an AI model is meant to help. A live model was tried five times: it
+scored the same 87.5% every time. With the first instruction it caught some comment-based warnings but rated them Amber, not Red; with a
+stricter second instruction it caught them all but raised three slow-drift weeks to Red. So on this small sample it did not beat the rules; it made different mistakes. More testing is needed.
 
 ## 5. Glossary
 

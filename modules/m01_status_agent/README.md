@@ -36,9 +36,10 @@ Your own Jira: set `JIRA_BASE_URL`, `JIRA_EMAIL`, `JIRA_API_TOKEN` as environmen
 | Rule baseline RAG accuracy | 87.5% (21/24) | 🟢 measured |
 | Baseline on comment-only cases | 0% (0/3) | 🟢 measured |
 | Grounding rate (no invented keys) | 100% | 🟢 measured |
-| Live model (claude-sonnet-5-5), RAG accuracy | 87.5% (21/24), one run on 2026-11-06 | 🟢 measured |
-| Live model on the 3 comment-only cases | 33% (1/3) | 🟢 measured |
-| Live model grounding rate | 100% | 🟢 measured |
+| Live model v1 prompt (claude-sonnet-5-5), RAG accuracy | 87.5%, identical in 5 runs (2026-11-06) | 🟢 measured |
+| Live model v1 on the 3 comment-only cases | 33% (1/3) | 🟢 measured |
+| Live model v2 prompt (tuned on these same cases), RAG accuracy | 87.5%, identical in 5 runs; comment-only 100% (3/3), but 3 AMBER weeks over-called RED | 🟢 measured, optimistic |
+| Live model grounding rate (both prompts) | 100% | 🟢 measured |
 | Time saved per report | not measured | 🔴 hypothetical |
 
 Tags: 🟢 a script in this repo prints it, 🟡 modeled with a stated assumption, 🔴 designed but not tested.

@@ -6,7 +6,7 @@ no-account path (Part A to C) and about 30 minutes more to connect your own Jira
 **What was tested.** Parts A to C were run from a fresh `git clone` on Linux with Python 3.13, and the same
 commands run in CI on Python 3.12 (see `.github/workflows/ci.yml`). The code is written for Python 3.10+ but
 3.10 and 3.11 were not tested. macOS and Windows commands below are standard equivalents and were **not** run
-by the author; they are marked. Part D's live model step was run once (eval only); live Jira and Part E real sending have **not** been run yet. Every error
+by the author; they are marked. Part D's live model step was run (eval only, synthetic data); live Jira and Part E real sending have **not** been run yet. Every error
 message quoted in the troubleshooting table was reproduced, except where marked.
 
 ---

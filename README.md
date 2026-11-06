@@ -52,7 +52,7 @@ Full explanation, design choices and limits: [docs/HOW_IT_WORKS.md](docs/HOW_IT_
 
 | Module | Status |
 |---|---|
-| [01 Status & executive report agent](modules/m01_status_agent/README.md) | built, with scheduling and approval-gated email; offline baseline and one live-model run measured; live Jira, a real mail server and a real scheduler **not yet run** |
+| [01 Status & executive report agent](modules/m01_status_agent/README.md) | built, with scheduling and approval-gated email; offline baseline and live-model runs measured; live Jira, a real mail server and a real scheduler **not yet run** |
 | 02 Meeting-to-action pipeline | planned |
 | 03 Risk & RAID intelligence | planned |
 | 04 Backlog refinement assistant | planned |
@@ -96,9 +96,10 @@ Reproduced by `python3 -m modules.m01_status_agent.eval.run_eval` on 24 labelled
 | Rule baseline RAG accuracy | 87.5% (21/24) | 🟢 measured |
 | Baseline on comment-only cases | 0% (0/3) | 🟢 measured |
 | Grounding rate (no invented keys) | 100% | 🟢 measured |
-| Live model (claude-sonnet-5-5), RAG accuracy | 87.5% (21/24), one run on 2026-11-06 | 🟢 measured |
-| Live model on the 3 comment-only cases | 33% (1/3) | 🟢 measured |
-| Live model grounding rate | 100% | 🟢 measured |
+| Live model v1 prompt (claude-sonnet-5-5), RAG accuracy | 87.5%, identical in 5 runs (2026-11-06) | 🟢 measured |
+| Live model v1 on the 3 comment-only cases | 33% (1/3) | 🟢 measured |
+| Live model v2 prompt (tuned on these same cases), RAG accuracy | 87.5%, identical in 5 runs; comment-only 100% (3/3), but 3 AMBER weeks over-called RED | 🟢 measured, optimistic |
+| Live model grounding rate (both prompts) | 100% | 🟢 measured |
 | Time saved per report | not measured | 🔴 hypothetical |
 
 🟢 a script in this repo prints it, 🟡 modeled with a stated assumption, 🔴 designed but not tested.
@@ -106,7 +107,7 @@ Reproduced by `python3 -m modules.m01_status_agent.eval.run_eval` on 24 labelled
 **Read before trusting:** the data is synthetic and the labels are the author's design intent; 24 cases is small; two
 scenario types are deliberately written so the signal sits in comments (a stress test the rule baseline is expected to
 miss); the first run scored 66.7% because of a data-generator bug that was fixed and disclosed, with thresholds
-untouched; the live model was run once and tied the rules (87.5%, different mistakes); the Jira connector has not been run for real. Details in
+untouched; the live model was run 5 times per prompt and tied the rules (87.5%; v1 under-calls RED, v2 over-calls it); the Jira connector has not been run for real. Details in
 [docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md#5-what-it-measured-and-what-that-does-and-does-not-prove).
 
 ## Repository map

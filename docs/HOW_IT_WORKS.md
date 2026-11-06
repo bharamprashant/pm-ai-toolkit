@@ -100,25 +100,25 @@ Read these carefully:
 - A test named `test_a_good_model...` uses a **simulated** model to prove the harness can show an improvement. It is a
   test of the harness, not a result about any real model.
 
-**Live model, one run (2026-11-06, `claude-sonnet-5-5`, 24 cases).** Same headline accuracy as the rules, different mistakes:
+**Live model, 5 runs per prompt (2026-11-06, `claude-sonnet-5-5`, 24 cases).** Reproduce with
+`python3 -m modules.m01_status_agent.eval.run_eval --live --runs 5 --prompt both` (needs your own API key).
 
-| | Rule baseline | Live model |
-|---|---|---|
-| RAG accuracy | 87.5% (21/24) | 87.5% (21/24) |
-| Comment-only cases | 0/3 | 1/3 |
-| False alarms on genuinely green weeks | 1 | 0 |
-| Invented ticket keys | 0 | 0 |
-| Misses | Payments 03-20 (GREEN, expected RED); Reporting 03-27 (GREEN, expected RED); Collections 03-20 (AMBER, expected GREEN) | Payments 03-20 (AMBER, expected RED); Reporting 03-27 (AMBER, expected RED); Data-Sharing 03-27 (GREEN, expected AMBER) |
+| | Rule baseline | Live, prompt v1 | Live, prompt v2 |
+|---|---|---|---|
+| RAG accuracy | 87.5% (21/24) | 87.5% in all 5 runs | 87.5% in all 5 runs |
+| Comment-only cases (3) | 0/3 | 1/3 | 3/3 |
+| Grounding (no invented ticket keys) | 100% | 100% | 100% |
+| Misses | Payments 03-20 (GREEN, expected RED); Reporting 03-27 (GREEN, expected RED); Collections 03-20 (AMBER, expected GREEN) | Payments 03-20 (AMBER, expected RED); Reporting 03-27 (AMBER, expected RED); Data-Sharing 03-27 slipping (GREEN, expected AMBER) | Data-Sharing 03-13 and 03-20, Reporting 03-20, all `silent_drift` (RED, expected AMBER) |
 
 What this shows, and what it does not:
-- The model read the comments: the two hidden-blocker weeks moved from GREEN to AMBER, and the duplicate-ticket false alarm was fixed. But it **under-called** both, stopping at AMBER where the label says RED, so under the strict scoring they are still misses.
-- It introduced one new miss the rules did not have: a slipping workstream called GREEN.
-- Accuracy did not improve. The honest reading is that, on this small synthetic set, the model changed which cases are wrong more than how many. It does not show that the model beats the rules.
-- It is **one run**. Current models do not accept a temperature setting (the first attempt failed on exactly that, now fixed and tested), so repeat runs can differ. One case is 4.2 points; a few cases moving would change the headline.
-- Grounding held at 100%: the verifier never had to reject an invented ticket key on this run.
-- This is what the human approval step is for: a draft that calls a blocked workstream AMBER still reaches a person, who decides.
+- **The model reads comments, but v1 under-calls.** The two hidden-blocker weeks moved from GREEN to AMBER and the duplicate-ticket false alarm was fixed, but the labels say RED, and one slipping week was called GREEN.
+- **Prompt v2 fixed that and over-called.** It rates a stated blocker with no firm date as RED. All three comment-only weeks are now right, but three slow-drift weeks the labels call AMBER were rated RED. The accuracy is identical because the mistakes moved, not because they went away.
+- **The results were identical in all 5 runs of each prompt**, so on these 24 cases the model is stable at its default sampling. That is five repeats of the same cases, not evidence that it is stable on other data. (Current models reject a temperature setting, so it cannot be pinned.)
+- **v2 was written after seeing the v1 misses and scored on the same 24 cases**, so any gain it shows is optimistic. Its new misses are the honest cost of that rule.
+- Neither prompt beats the rules on accuracy. The honest reading is that the choice is about which mistake you prefer: v1 tends to under-warn, v2 tends to over-warn. A person approving the draft sees either one before it goes anywhere.
+- Grounding held at 100%: the verifier never had to reject an invented ticket key.
 
-Next steps that would make this stronger: repeat the live run several times and report the range, add more comment-only cases, and try a prompt that tells the model when a stated blocker with no date should be RED.
+Next step that would make this stronger: write new held-out cases (more silent-drift weeks in particular), score v1 and v2 on them untouched, and only then try a narrower severity rule.
 
 What this proves: the pipeline works end to end, the guardrails trigger, and the harness can measure. What it does not
 prove: that a live model beats the baseline (on the synthetic set it tied) or how it performs on real programs. That needs Part D of `GETTING_STARTED.md` and a real,
