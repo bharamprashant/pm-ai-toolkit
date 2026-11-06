@@ -1,0 +1,192 @@
+{
+  "2026-03-02": [
+    {
+      "quote": "Action: Priya to send the KYC vendor contract by Friday.",
+      "owner": "Priya",
+      "due": "2026-03-06",
+      "archetype": "explicit"
+    },
+    {
+      "quote": "Marcus said he will chase the bank for the sandbox credentials by Wednesday.",
+      "owner": "Marcus",
+      "due": "2026-03-04",
+      "archetype": "implicit"
+    },
+    {
+      "quote": "Someone needs to update the risk log.",
+      "owner": null,
+      "due": null,
+      "archetype": "no_owner"
+    },
+    {
+      "quote": "Sofia will draft the communications plan.",
+      "owner": "Sofia",
+      "due": null,
+      "archetype": "no_date"
+    }
+  ],
+  "2026-03-04": [
+    {
+      "quote": "ACTION: Lee to book the steering committee room for next Tuesday.",
+      "owner": "Lee",
+      "due": "2026-03-10",
+      "archetype": "explicit"
+    },
+    {
+      "quote": "Dana will confirm the penetration test slot by end of next week.",
+      "owner": "Dana",
+      "due": "2026-03-13",
+      "archetype": "implicit"
+    },
+    {
+      "quote": "Omar to review the data processing agreement by tomorrow.",
+      "owner": "Omar",
+      "due": "2026-03-05",
+      "archetype": "implicit"
+    },
+    {
+      "quote": "Marcus to follow up on the escalation.",
+      "owner": "Marcus",
+      "due": null,
+      "archetype": "no_date"
+    }
+  ],
+  "2026-03-09": [
+    {
+      "quote": "Action: Sofia to share the revised plan on 13 March.",
+      "owner": "Sofia",
+      "due": "2026-03-13",
+      "archetype": "explicit"
+    },
+    {
+      "quote": "Dana mentioned she'd look into the reconciliation mismatch before the next sync.",
+      "owner": "Dana",
+      "due": null,
+      "archetype": "no_date"
+    },
+    {
+      "quote": "Lee will prepare the test data in 3 days.",
+      "owner": "Lee",
+      "due": "2026-03-12",
+      "archetype": "implicit"
+    }
+  ],
+  "2026-03-11": [
+    {
+      "quote": "ACTION: Priya to escalate the vendor delay to the sponsor today.",
+      "owner": "Priya",
+      "due": "2026-03-11",
+      "archetype": "explicit"
+    },
+    {
+      "quote": "Marcus will pair with Omar on the SSO fix by Friday.",
+      "owner": "Marcus",
+      "due": "2026-03-13",
+      "archetype": "implicit"
+    },
+    {
+      "quote": "Dana is going to send the weekly report on Monday.",
+      "owner": "Dana",
+      "due": "2026-03-16",
+      "archetype": "implicit"
+    }
+  ],
+  "2026-03-16": [
+    {
+      "quote": "Action: Lee to fix the file-naming bug by end of this week.",
+      "owner": "Lee",
+      "due": "2026-03-20",
+      "archetype": "explicit"
+    },
+    {
+      "quote": "Omar said he will check with legal about the retention clause by 2026-03-24.",
+      "owner": "Omar",
+      "due": "2026-03-24",
+      "archetype": "implicit"
+    },
+    {
+      "quote": "Somebody should tell the vendor about the new date.",
+      "owner": null,
+      "due": null,
+      "archetype": "no_owner"
+    },
+    {
+      "quote": "Dana will send the minutes tomorrow.",
+      "owner": "Dana",
+      "due": "2026-03-17",
+      "archetype": "implicit"
+    }
+  ],
+  "2026-03-18": [
+    {
+      "quote": "ACTION: Marcus to rotate the SFTP keys next Friday.",
+      "owner": "Marcus",
+      "due": "2026-03-27",
+      "archetype": "explicit"
+    },
+    {
+      "quote": "Sofia will update the RAID log by Thursday.",
+      "owner": "Sofia",
+      "due": "2026-03-19",
+      "archetype": "implicit"
+    },
+    {
+      "quote": "Lee volunteered to demo the dashboard.",
+      "owner": "Lee",
+      "due": null,
+      "archetype": "no_date"
+    }
+  ],
+  "2026-03-23": [
+    {
+      "quote": "Action: Dana to book the UAT window by Wednesday.",
+      "owner": "Dana",
+      "due": "2026-03-25",
+      "archetype": "explicit"
+    },
+    {
+      "quote": "Priya will confirm the contract signature in 2 weeks.",
+      "owner": "Priya",
+      "due": "2026-04-06",
+      "archetype": "implicit"
+    },
+    {
+      "quote": "Everyone needs to read the security policy.",
+      "owner": null,
+      "due": null,
+      "archetype": "no_owner"
+    },
+    {
+      "quote": "Action: Omar to send the data-sharing agreement on 27 March.",
+      "owner": "Omar",
+      "due": "2026-03-27",
+      "archetype": "explicit"
+    }
+  ],
+  "2026-03-25": [
+    {
+      "quote": "ACTION: Sofia to publish the release notes by end of next week.",
+      "owner": "Sofia",
+      "due": "2026-04-03",
+      "archetype": "explicit"
+    },
+    {
+      "quote": "Lee said he'd have a look at the failing build when he gets a chance.",
+      "owner": "Lee",
+      "due": null,
+      "archetype": "no_date"
+    },
+    {
+      "quote": "Dana will circulate the updated plan by Friday.",
+      "owner": "Dana",
+      "due": "2026-03-27",
+      "archetype": "implicit"
+    },
+    {
+      "quote": "Marcus to check certificate expiry.",
+      "owner": "Marcus",
+      "due": null,
+      "archetype": "no_date"
+    }
+  ]
+}

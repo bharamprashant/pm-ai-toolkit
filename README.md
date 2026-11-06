@@ -53,7 +53,7 @@ Full explanation, design choices and limits: [docs/HOW_IT_WORKS.md](docs/HOW_IT_
 | Module | Status |
 |---|---|
 | [01 Status & executive report agent](modules/m01_status_agent/README.md) | built, with scheduling and approval-gated email; offline baseline and live-model runs measured; live Jira, a real mail server and a real scheduler **not yet run** |
-| 02 Meeting-to-action pipeline | planned |
+| [02 Meeting-to-action pipeline](modules/m02_meeting_actions/README.md) | built; offline baseline measured (31% recall: it reads only `Action:` lines); live model not run |
 | 03 Risk & RAID intelligence | planned |
 | 04 Backlog refinement assistant | planned |
 | 05 Audit evidence & control mapping | planned |
@@ -77,7 +77,7 @@ No coding needed: [docs/FOR_NON_TECHNICAL_USERS.md](docs/FOR_NON_TECHNICAL_USERS
 git clone https://github.com/bharamprashant/pm-ai-toolkit
 cd pm-ai-toolkit
 python3 -m pip install pytest
-python3 -m pytest -q                                   # expect: 54 passed
+python3 -m pytest -q                                   # expect: 85 passed
 python3 -m modules.m01_status_agent.run --input data/synthetic/snapshots/2026-03-20.csv --as-of 2026-03-20
 python3 -m modules.m01_status_agent.eval.run_eval      # expect: RAG accuracy 87.5%
 ```
@@ -118,7 +118,7 @@ data/          synthetic Jira-shaped data generator (seeded, reproducible), snap
 modules/       one folder per module: code, README, SETUP.md, AGENT_CONTRACT.md, eval
 governance/    reusable agent-contract template
 docs/          getting started, how it works, setup standard, idea backlog
-tests/         54 automated tests (run in CI on every push)
+tests/         85 automated tests (run in CI on every push)
 ```
 
 ## Safety

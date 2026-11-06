@@ -1,0 +1,8 @@
+Meeting: Vendor escalation call
+Date: 2026-03-11
+Attendees: Priya, Marcus, Sofia, Lee, Dana, Omar
+
+ACTION: Priya to escalate the vendor delay to the sponsor today.
+Marcus will pair with Omar on the SSO fix by Friday.
+Dana is going to send the weekly report on Monday.
+The sandbox is down again, which is annoying.

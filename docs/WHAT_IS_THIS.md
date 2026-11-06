@@ -7,8 +7,8 @@ does not do, who benefits and how, a worked example from the real sample data, a
 
 **PM AI Toolkit is a public, open-source collection of AI helpers for program managers, project managers and PMOs.**
 Each helper is a small, complete, tested program that does one recurring piece of PM work, shows you how it reached
-its answer, checks itself before speaking, waits for a named human to approve, and keeps a record. Today one helper is
-finished (a weekly status-report agent). The rest are planned and documented. The project is as much a **method for using AI
+its answer, checks itself before speaking, waits for a named human to approve, and keeps a record. Today two helpers are
+finished (a weekly status-report agent and a meeting-to-action agent). The rest are planned and documented. The project is as much a **method for using AI
 safely in project work** as it is software.
 
 ## 2. What is this GitHub repository?
@@ -64,7 +64,7 @@ against the facts so it cannot make something up. A live model was tried five ti
 | **A program or project manager** | Draft your weekly report faster, with ticket-level evidence | A reviewable first draft in seconds. Time saved is not yet measured |
 | **A PMO lead** | Decide how your PMO will introduce AI helpers safely | A ready agent contract, approval gate, audit log and a setup standard to copy |
 | **A manager or sponsor** | Understand why a workstream is Amber | Each colour comes with a reason that points at specific tickets |
-| **Someone learning AI for PM work** | See a real, small, testable AI system end to end | Readable code, 54 tests, an evaluation, and honest notes on what failed first |
+| **Someone learning AI for PM work** | See a real, small, testable AI system end to end | Readable code, 85 tests, an evaluation, and honest notes on what failed first |
 | **A team choosing an AI model or prompt** | Compare options on evidence | A repeatable eval with a confusion matrix, so a change can be judged, not felt |
 | **An interviewer or recruiter** | See that the author built and understands the AI, not just used it | Working code, tests, disclosed bugs, documented limits |
 | **A builder who wants to extend it** | Start a new PM helper on a proven pattern | The module structure and setup standard to follow |
@@ -88,14 +88,14 @@ against the facts so it cannot make something up. A live model was tried five ti
 - The live model has been run on the synthetic set (tied the rules at 87.5%, different mistakes). The Jira connector has **not** been run against a real site.
 - The results are on **synthetic** data with author-designed labels, 24 cases. They show the pipeline works, not
   how a model performs on your real program.
-- Only module 01 is built. Modules 02 to 07 are planned.
+- Modules 01 and 02 are built. Modules 03 to 07 are planned.
 
 ## 8. What is planned
 
 | Module | Idea | Status |
 |---|---|---|
 | 01 Status & executive report | weekly RAG report from tickets | built |
-| 02 Meeting-to-action pipeline | turn meeting notes into owners, actions, dates | planned |
+| 02 Meeting-to-action pipeline | turn meeting notes into owners, actions, dates | built; offline baseline measured, live model not run |
 | 03 Risk & RAID intelligence | find and track risks, assumptions, issues, dependencies | planned |
 | 04 Backlog refinement assistant | improve story quality and acceptance criteria | planned |
 | 05 Audit evidence & control mapping | gather evidence and map controls for audits | planned |

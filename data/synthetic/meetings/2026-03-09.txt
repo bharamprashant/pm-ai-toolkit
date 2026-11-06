@@ -1,0 +1,9 @@
+Meeting: Weekly programme sync
+Date: 2026-03-09
+Attendees: Priya, Marcus, Sofia, Lee, Dana, Omar
+
+Action: Sofia to share the revised plan on 13 March.
+Dana mentioned she'd look into the reconciliation mismatch before the next sync.
+We agreed the go-live stays on 30 April.
+Lee will prepare the test data in 3 days.
+Could we also revisit the vendor shortlist at some point?

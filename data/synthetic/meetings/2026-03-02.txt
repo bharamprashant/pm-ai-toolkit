@@ -1,0 +1,10 @@
+Meeting: Weekly programme sync
+Date: 2026-03-02
+Attendees: Priya, Marcus, Sofia, Lee, Dana
+
+Action: Priya to send the KYC vendor contract by Friday.
+Marcus said he will chase the bank for the sandbox credentials by Wednesday.
+We decided to use SFTP for the payroll file exchange.
+Someone needs to update the risk log.
+Sofia will draft the communications plan.
+Priya already sent the invoice to finance last week.

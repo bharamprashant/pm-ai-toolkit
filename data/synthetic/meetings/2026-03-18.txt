@@ -1,0 +1,9 @@
+Meeting: Release readiness
+Date: 2026-03-18
+Attendees: Priya, Marcus, Sofia, Lee, Dana, Omar
+
+ACTION: Marcus to rotate the SFTP keys next Friday.
+Sofia will update the RAID log by Thursday.
+Lee volunteered to demo the dashboard.
+We decided to drop the second pilot bank.
+Omar already closed the access ticket yesterday.

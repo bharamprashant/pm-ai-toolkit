@@ -7,7 +7,7 @@ Status: idea -> scoped -> building -> built (offline measured) -> live-tested.
 | # | Idea | Type | Proves | Status |
 |---|---|---|---|---|
 | 01 | Status & executive report agent | agent | grounded judgment, verifier, approval gate | built (offline measured); live model and live Jira not run |
-| 02 | Meeting-to-action pipeline | automation | extraction accuracy on labelled transcripts | scoped |
+| 02 | Meeting-to-action pipeline | automation | extraction accuracy on labelled notes, code-resolved dates, owners checked against attendees | built (offline measured); live model not run |
 | 03 | Risk & RAID intelligence | agent | reasoning over data, false-alarm rate | idea |
 | 04 | Backlog refinement assistant | agent | human-review acceptance rate | idea |
 | 05 | Audit evidence & control mapping | agent | retrieval with cited sources | idea |

@@ -1,0 +1,9 @@
+Meeting: Go-live planning
+Date: 2026-03-25
+Attendees: Priya, Marcus, Sofia, Lee, Dana, Omar
+
+ACTION: Sofia to publish the release notes by end of next week.
+Lee said he'd have a look at the failing build when he gets a chance.
+Dana will circulate the updated plan by Friday.
+The vendor's invoice was paid last week.
+Marcus to check certificate expiry.

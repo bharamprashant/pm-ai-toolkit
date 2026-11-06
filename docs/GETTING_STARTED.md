@@ -50,7 +50,7 @@ Step 2. Run the tests.
 ```bash
 python3 -m pytest -q
 ```
-Expected: `54 passed`
+Expected: `85 passed`
 
 Step 3. Produce a status report.
 ```bash
