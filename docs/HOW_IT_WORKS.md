@@ -83,7 +83,9 @@ Reproduce with `python3 -m modules.m01_status_agent.eval.run_eval`.
 | Rule baseline RAG accuracy on 24 labelled workstream-weeks | 87.5% (21/24) | measured |
 | Baseline on the 3 comment-only cases | 0% (0/3) | measured |
 | Grounding rate (no invented ticket keys) | 100% | measured |
-| Live model accuracy | not run yet | hypothetical |
+| Live model (claude-sonnet-5-5), RAG accuracy | 87.5% (21/24), one run on 2026-11-06 | measured |
+| Live model on the 3 comment-only cases | 33% (1/3) | measured |
+| Live model grounding rate | 100% | measured |
 | Time saved per report | not measured | hypothetical |
 
 Read these carefully:
@@ -98,8 +100,28 @@ Read these carefully:
 - A test named `test_a_good_model...` uses a **simulated** model to prove the harness can show an improvement. It is a
   test of the harness, not a result about any real model.
 
+**Live model, one run (2026-11-06, `claude-sonnet-5-5`, 24 cases).** Same headline accuracy as the rules, different mistakes:
+
+| | Rule baseline | Live model |
+|---|---|---|
+| RAG accuracy | 87.5% (21/24) | 87.5% (21/24) |
+| Comment-only cases | 0/3 | 1/3 |
+| False alarms on genuinely green weeks | 1 | 0 |
+| Invented ticket keys | 0 | 0 |
+| Misses | Payments 03-20 (GREEN, expected RED); Reporting 03-27 (GREEN, expected RED); Collections 03-20 (AMBER, expected GREEN) | Payments 03-20 (AMBER, expected RED); Reporting 03-27 (AMBER, expected RED); Data-Sharing 03-27 (GREEN, expected AMBER) |
+
+What this shows, and what it does not:
+- The model read the comments: the two hidden-blocker weeks moved from GREEN to AMBER, and the duplicate-ticket false alarm was fixed. But it **under-called** both, stopping at AMBER where the label says RED, so under the strict scoring they are still misses.
+- It introduced one new miss the rules did not have: a slipping workstream called GREEN.
+- Accuracy did not improve. The honest reading is that, on this small synthetic set, the model changed which cases are wrong more than how many. It does not show that the model beats the rules.
+- It is **one run**. Current models do not accept a temperature setting (the first attempt failed on exactly that, now fixed and tested), so repeat runs can differ. One case is 4.2 points; a few cases moving would change the headline.
+- Grounding held at 100%: the verifier never had to reject an invented ticket key on this run.
+- This is what the human approval step is for: a draft that calls a blocked workstream AMBER still reaches a person, who decides.
+
+Next steps that would make this stronger: repeat the live run several times and report the range, add more comment-only cases, and try a prompt that tells the model when a stated blocker with no date should be RED.
+
 What this proves: the pipeline works end to end, the guardrails trigger, and the harness can measure. What it does not
-prove: that a live model beats the baseline on real programs. That needs Part D of `GETTING_STARTED.md` and a real,
+prove: that a live model beats the baseline (on the synthetic set it tied) or how it performs on real programs. That needs Part D of `GETTING_STARTED.md` and a real,
 approved dataset.
 
 ## 6. Adapting it
@@ -118,7 +140,7 @@ approved dataset.
 
 - It sees only the export. It does not know about a conversation that never reached a ticket.
 - It trusts comment text as written.
-- The Jira connector and the live model path have **not** been run against real services yet.
+- The live model was run once on the synthetic set (see above). The Jira connector has **not** been run against a real site yet.
 - It is a decision aid. It does not replace the program manager's judgment, and a RED needs a human decision.
 - Do not feed it confidential data unless your organisation has approved this use of an external model.
 

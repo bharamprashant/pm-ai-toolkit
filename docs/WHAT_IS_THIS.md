@@ -55,8 +55,7 @@ and it is wrong on purpose: it shows exactly where an AI model is supposed to ad
 
 Those two cases are the point of the project. Counting is something code does perfectly. Reading a sentence and
 deciding what it means is something a model can do. The toolkit lets each do its own job, then checks the model's answer
-against the facts so it cannot make something up. Whether a real model actually gets these two right has **not been tested yet**;
-the project is built so you can measure it the moment you connect one.
+against the facts so it cannot make something up. When a live model was tried once, it fixed the Collections false alarm and rated the Payments-type blocker Amber rather than Green, but not Red as labelled, and it scored the same 87.5% overall. One run on 24 synthetic cases is a first data point, not proof.
 
 ## 5. Who can use it, and for what
 
@@ -86,7 +85,7 @@ the project is built so you can measure it the moment you connect one.
 - It does **not** write to Jira, approve its own report, or email stakeholders on its own. A scheduled run stops at a draft and emails only the approver; a person approves and then runs the publish step.
 - It does **not** replace your judgment. A RED still needs a human decision.
 - It only sees what is in the export. A conversation that never reached a ticket is invisible to it.
-- The Jira connector and the live-model path have **not** been run against real services yet.
+- The live model has been run once on the synthetic set (tied the rules at 87.5%, different mistakes). The Jira connector has **not** been run against a real site.
 - The results are on **synthetic** data with author-designed labels, 24 cases. They show the pipeline works, not
   how a model performs on your real program.
 - Only module 01 is built. Modules 02 to 07 are planned.

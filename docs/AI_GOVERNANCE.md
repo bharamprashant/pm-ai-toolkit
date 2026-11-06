@@ -153,7 +153,7 @@ This is a plain-language mapping for orientation. It is **not** an assessment ag
 | Human oversight | Drafts only; a named approver; decisions listed | Approver identity not authenticated |
 | Transparency | Reasons cite tickets; the report states what is code and what is model; fallback is flagged | Prompt not logged |
 | Accountability | An owner and approver are named in the contract and log | Roles not enforced |
-| Accuracy and robustness | Verifier, fallback, labelled evaluation | Only synthetic data; live model untested |
+| Accuracy and robustness | Verifier, fallback, labelled evaluation | Only synthetic data; live model run once (tied the rules, under-called two RED weeks) |
 | Record-keeping | Append-only style log with fingerprints | Not tamper-proof |
 | Data protection | Offline default; read-only access; credentials never sent to the model | Comment text goes to the model in live mode |
 

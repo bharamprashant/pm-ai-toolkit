@@ -242,7 +242,7 @@ A correct run prints six workstreams, shows no "(fallback)" marks unless the mod
 |---|---|
 | Sections 3.1-3.4, 5 (synthetic dry run, tests, eval) | yes |
 | Sections 3.5-3.8, 6 (live Jira connector) | **no - untested against a live site** |
-| `--live` model run | **no - not run yet** |
+| `--live` model run | yes, once on the synthetic eval (2026-11-06); not on real data |
 | Section 7.3 (dry-run emails, refusal of drafts and edited files) | yes, run end to end on a clean checkout |
 | Section 7.4 real sending | **simulated server in unit tests only; not tested against a real mail server** |
 | Section 7.6 Slack payloads, escaping, webhook checks, dry run | yes (unit tests and an end-to-end dry run) |
