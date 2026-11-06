@@ -48,7 +48,7 @@ FINAL report      every step appended to out/audit.jsonl with actor, time, conte
 | Choice | Where in the code | What problem it solves |
 |---|---|---|
 | Facts are computed by code, never by the model | `facts.py` | The model cannot miscount or misread a date, because it is never asked to. It receives finished numbers |
-| The model returns strict JSON | `core/llm.py` (`extract_json`, temperature 0) | Output can be checked by a program instead of being read and hoped about |
+| The model returns strict JSON | `core/llm.py` (`extract_json`; no temperature setting, so live runs can vary a little) | Output can be checked by a program instead of being read and hoped about |
 | A verifier with a grounding rule | `agent.py` `verify()` | Any cited ticket key not present in the data rejects the whole answer. Invented evidence cannot reach a report |
 | Rule baseline as the fallback | `agent.py` `baseline()` | If the model fails the verifier or is unavailable, you still get a safe, explainable answer, and it is marked |
 | Swappable model interface | `core/llm.py` (`LLM` protocol, `OfflineBaseline`, `AnthropicLLM`) | The same pipeline runs offline for tests and with a live model in production. Other providers can be added without touching the agent |

@@ -66,11 +66,12 @@ class AnthropicLLM:
         self.max_tokens = max_tokens
         self.name = f"anthropic:{self.model}"
 
-    def complete_json(self, system: str, user: str) -> dict[str, Any]:  # pragma: no cover
+    def complete_json(self, system: str, user: str) -> dict[str, Any]:
+        # No temperature argument: current Claude models reject it (found on the first live run), so
+        # sampling is left at the model's default and results can differ slightly between runs.
         reply = self._client.messages.create(
             model=self.model,
             max_tokens=self.max_tokens,
-            temperature=0,
             system=system + "\nReturn ONLY one JSON object. No prose.",
             messages=[{"role": "user", "content": user}],
         )
