@@ -38,13 +38,14 @@ def _same(a: str, b: str) -> bool:
     return bool(a) and bool(b) and (a in b or b in a)
 
 
-def evaluate(llm) -> dict:
-    labels = json.loads((DATA / "meeting_labels.json").read_text())
+def evaluate(llm, data_set: str = "main") -> dict:
+    base, label_file = ((DATA, "meeting_labels.json") if data_set == "main" else (DATA / "heldout", "labels.json"))
+    labels = json.loads((base / label_file).read_text())
     n_lab = matched = owner_ok = due_ok = all_ok = predicted = proposed = accepted = 0
     by_arch = {k: [0, 0] for k in ARCHETYPES}   # [found, total]
     missed, extra, wrong = [], [], []
     for mid, labelled in labels.items():
-        meeting = parse_meeting((DATA / "meetings" / f"{mid}.txt").read_text())
+        meeting = parse_meeting((base / "meetings" / f"{mid}.txt").read_text())
         res = agent.assess(llm, meeting)
         proposed += res["proposed"]
         accepted += len(res["actions"])
@@ -97,15 +98,17 @@ def show(r: dict) -> None:
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--live", action="store_true")
+    ap.add_argument("--set", dest="data_set", choices=["main", "heldout"], default="main",
+                    help="heldout = the second, harder set written after the prompt was frozen")
     ap.add_argument("--runs", type=int, default=1, help=f"repeat the live run (1 to {MAX_RUNS})")
     a = ap.parse_args()
     if not 1 <= a.runs <= MAX_RUNS:
         ap.error(f"--runs must be between 1 and {MAX_RUNS}")
-    out = [evaluate(agent.baseline())]
+    out = [evaluate(agent.baseline(), a.data_set)]
     show(out[0])
     if a.live:
         llm = AnthropicLLM()
-        runs = [evaluate(llm) for _ in range(a.runs)]
+        runs = [evaluate(llm, a.data_set) for _ in range(a.runs)]
         if a.runs == 1:
             show(runs[0])
         else:
@@ -115,7 +118,7 @@ def main():
                 vals = [r[k] for r in runs]
                 print(f"{k}: {pct(min(vals))} to {pct(max(vals))}, mean {pct(sum(vals) / len(vals))}")
         out += runs
-    (Path(__file__).parent / "results.json").write_text(json.dumps(out, indent=2))
+    (Path(__file__).parent / ("results.json" if a.data_set == "main" else "results_heldout.json")).write_text(json.dumps(out, indent=2))
 
 
 if __name__ == "__main__":

@@ -1,0 +1,9 @@
+Meeting: Release readiness
+Date: 2026-06-03
+Attendees: Anna, Raj, Mei, Tomas, Elin, Ben
+
+Raj: I'll get the load test results to Mei by Friday.
+Anna: We agreed not to ship the export feature this sprint.
+Someone should check the staging certificate before release.
+Tomas: Last week I fixed the login timeout.
+Elin will write the release notes by the end of next week.

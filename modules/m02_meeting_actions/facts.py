@@ -65,6 +65,7 @@ def resolve_due(phrase: str | None, meeting_date: date) -> date | None:
         return None
     p = normalise(phrase).rstrip(".")
     p = re.sub(r"^(by|on|before|until|for|due)\s+", "", p)
+    p = re.sub(r"^the\s+(?=end of)", "", p)   # "by the end of next week" (found by the held-out set)
     d = meeting_date
     if p == "today":
         return d

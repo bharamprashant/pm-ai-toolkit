@@ -1,0 +1,114 @@
+[
+  {
+    "model": "offline-baseline",
+    "meetings": 6,
+    "labelled_actions": 18,
+    "reported": 0,
+    "recall": 0.0,
+    "precision": 0.0,
+    "owner_correct": 0.0,
+    "due_correct": 0.0,
+    "all_correct": 0.0,
+    "grounding": 1.0,
+    "recall_by_archetype": {
+      "explicit": 0.0,
+      "implicit": 0.0,
+      "no_date": 0.0,
+      "no_owner": 0.0
+    },
+    "missed": [
+      {
+        "meeting": "2026-06-03",
+        "archetype": "implicit",
+        "quote": "Raj: I'll get the load test results to Mei by Friday."
+      },
+      {
+        "meeting": "2026-06-03",
+        "archetype": "no_owner",
+        "quote": "Someone should check the staging certificate before release."
+      },
+      {
+        "meeting": "2026-06-03",
+        "archetype": "implicit",
+        "quote": "Elin will write the release notes by the end of next week."
+      },
+      {
+        "meeting": "2026-06-08",
+        "archetype": "no_owner",
+        "quote": "The vendor list needs to be sent to procurement by 15 June."
+      },
+      {
+        "meeting": "2026-06-08",
+        "archetype": "implicit",
+        "quote": "Tomas has promised to call the auditor in 3 days."
+      },
+      {
+        "meeting": "2026-06-08",
+        "archetype": "implicit",
+        "quote": "Elin to follow up with legal next Monday."
+      },
+      {
+        "meeting": "2026-06-10",
+        "archetype": "implicit",
+        "quote": "Mei said she would try to have the dashboard ready tomorrow."
+      },
+      {
+        "meeting": "2026-06-10",
+        "archetype": "implicit",
+        "quote": "Anna will send the agenda on Friday."
+      },
+      {
+        "meeting": "2026-06-10",
+        "archetype": "no_date",
+        "quote": "Tomas will finish the migration."
+      },
+      {
+        "meeting": "2026-06-10",
+        "archetype": "no_owner",
+        "quote": "Everyone must complete the compliance training by 30 June."
+      },
+      {
+        "meeting": "2026-06-17",
+        "archetype": "explicit",
+        "quote": "- Ben: draft the DR test plan (due 2026-06-24)"
+      },
+      {
+        "meeting": "2026-06-17",
+        "archetype": "explicit",
+        "quote": "- Mei: confirm the vendor SLA (due Friday)"
+      },
+      {
+        "meeting": "2026-06-17",
+        "archetype": "no_owner",
+        "quote": "- TBD: pick a date for the audit workshop"
+      },
+      {
+        "meeting": "2026-06-22",
+        "archetype": "no_date",
+        "quote": "Raj will get back to us on pricing after the call with legal."
+      },
+      {
+        "meeting": "2026-06-22",
+        "archetype": "implicit",
+        "quote": "Anna will present the results on Wednesday."
+      },
+      {
+        "meeting": "2026-06-22",
+        "archetype": "implicit",
+        "quote": "Tomas is going to circulate the minutes tomorrow."
+      },
+      {
+        "meeting": "2026-06-22",
+        "archetype": "implicit",
+        "quote": "Mei needs to renew the vendor licence by end of this week."
+      },
+      {
+        "meeting": "2026-06-24",
+        "archetype": "implicit",
+        "quote": "Elin will send the final invoice by Friday."
+      }
+    ],
+    "false_positives": [],
+    "wrong_fields": []
+  }
+]

@@ -1,0 +1,122 @@
+{
+  "2026-06-03": [
+    {
+      "quote": "Raj: I'll get the load test results to Mei by Friday.",
+      "owner": "Raj",
+      "due": "2026-06-05",
+      "archetype": "implicit"
+    },
+    {
+      "quote": "Someone should check the staging certificate before release.",
+      "owner": null,
+      "due": null,
+      "archetype": "no_owner"
+    },
+    {
+      "quote": "Elin will write the release notes by the end of next week.",
+      "owner": "Elin",
+      "due": "2026-06-12",
+      "archetype": "implicit"
+    }
+  ],
+  "2026-06-08": [
+    {
+      "quote": "The vendor list needs to be sent to procurement by 15 June.",
+      "owner": null,
+      "due": "2026-06-15",
+      "archetype": "no_owner"
+    },
+    {
+      "quote": "Tomas has promised to call the auditor in 3 days.",
+      "owner": "Tomas",
+      "due": "2026-06-11",
+      "archetype": "implicit"
+    },
+    {
+      "quote": "Elin to follow up with legal next Monday.",
+      "owner": "Elin",
+      "due": "2026-06-15",
+      "archetype": "implicit"
+    }
+  ],
+  "2026-06-10": [
+    {
+      "quote": "Mei said she would try to have the dashboard ready tomorrow.",
+      "owner": "Mei",
+      "due": "2026-06-11",
+      "archetype": "implicit"
+    },
+    {
+      "quote": "Anna will send the agenda on Friday.",
+      "owner": "Anna",
+      "due": "2026-06-12",
+      "archetype": "implicit"
+    },
+    {
+      "quote": "Tomas will finish the migration.",
+      "owner": "Tomas",
+      "due": null,
+      "archetype": "no_date"
+    },
+    {
+      "quote": "Everyone must complete the compliance training by 30 June.",
+      "owner": null,
+      "due": "2026-06-30",
+      "archetype": "no_owner"
+    }
+  ],
+  "2026-06-17": [
+    {
+      "quote": "- Ben: draft the DR test plan (due 2026-06-24)",
+      "owner": "Ben",
+      "due": "2026-06-24",
+      "archetype": "explicit"
+    },
+    {
+      "quote": "- Mei: confirm the vendor SLA (due Friday)",
+      "owner": "Mei",
+      "due": "2026-06-19",
+      "archetype": "explicit"
+    },
+    {
+      "quote": "- TBD: pick a date for the audit workshop",
+      "owner": null,
+      "due": null,
+      "archetype": "no_owner"
+    }
+  ],
+  "2026-06-22": [
+    {
+      "quote": "Raj will get back to us on pricing after the call with legal.",
+      "owner": "Raj",
+      "due": null,
+      "archetype": "no_date"
+    },
+    {
+      "quote": "Anna will present the results on Wednesday.",
+      "owner": "Anna",
+      "due": "2026-06-24",
+      "archetype": "implicit"
+    },
+    {
+      "quote": "Tomas is going to circulate the minutes tomorrow.",
+      "owner": "Tomas",
+      "due": "2026-06-23",
+      "archetype": "implicit"
+    },
+    {
+      "quote": "Mei needs to renew the vendor licence by end of this week.",
+      "owner": "Mei",
+      "due": "2026-06-26",
+      "archetype": "implicit"
+    }
+  ],
+  "2026-06-24": [
+    {
+      "quote": "Elin will send the final invoice by Friday.",
+      "owner": "Elin",
+      "due": "2026-06-26",
+      "archetype": "implicit"
+    }
+  ]
+}

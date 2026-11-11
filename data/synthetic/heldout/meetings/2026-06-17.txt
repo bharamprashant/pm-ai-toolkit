@@ -1,0 +1,9 @@
+Meeting: DR test planning
+Date: 2026-06-17
+Attendees: Anna, Raj, Mei, Tomas, Elin, Ben
+
+Action items:
+- Ben: draft the DR test plan (due 2026-06-24)
+- Mei: confirm the vendor SLA (due Friday)
+- TBD: pick a date for the audit workshop
+Decision: we will use the existing monitoring stack.

@@ -24,6 +24,8 @@ MON = date(2026, 3, 2)
     ("next Friday", date(2026, 3, 18), "2026-03-27"),
     ("end of this week", MON, "2026-03-06"),
     ("end of next week", WED, "2026-03-13"),
+    ("by the end of next week", WED, "2026-03-13"),
+    ("by the end of this week", MON, "2026-03-06"),
     ("in 3 days", date(2026, 3, 9), "2026-03-12"),
     ("in 2 weeks", date(2026, 3, 23), "2026-04-06"),
     ("on 13 March", date(2026, 3, 9), "2026-03-13"),
@@ -146,3 +148,29 @@ def test_labels_are_consistent_with_the_notes():
         text = (DATA / "meetings" / f"{mid}.txt").read_text()
         for it in items:
             assert it["quote"] in text
+
+
+def test_heldout_labels_agree_with_the_date_rules_and_checker():
+    """An oracle that returns the hand labels must score 100%: proves the held-out labels are consistent with the
+    published date rules (a wrong hand-worked date would fail here), not that any model is good."""
+    class Oracle:
+        name = "oracle"
+        def __init__(self): self.labels = json.loads((DATA / "heldout" / "labels.json").read_text())
+        def complete_json(self, system, user):
+            mid = next(m for m in self.labels if f'"MEETING_DATE": "{m}"' in user)
+            return {"actions": [{"owner": a["owner"], "task": a["quote"], "quote": a["quote"],
+                               "due_phrase": _phrase(a["quote"], a["due"])} for a in self.labels[mid]]}
+    def _phrase(quote, due):
+        if due is None:
+            return None
+        import re
+        m = re.search(r"(by the end of next week|end of next week|end of this week|next Monday|in 3 days|tomorrow|"
+                      r"on Friday|due Friday|Friday|Wednesday|15 June|30 June|2026-06-24)", quote)
+        return m.group(1)
+    r = evaluate(Oracle(), "heldout")
+    assert r["labelled_actions"] == 18 and r["recall"] == 1.0 and r["all_correct"] == 1.0, r["wrong_fields"]
+
+
+def test_heldout_baseline_runs():
+    r = evaluate(agent.baseline(), "heldout")
+    assert r["labelled_actions"] == 18 and 0 <= r["recall"] < 1
