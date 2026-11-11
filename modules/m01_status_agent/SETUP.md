@@ -241,7 +241,7 @@ A correct run prints six workstreams, shows no "(fallback)" marks unless the mod
 | Step | Run for real? |
 |---|---|
 | Sections 3.1-3.4, 5 (synthetic dry run, tests, eval) | yes |
-| Sections 3.5-3.8, 6 (live Jira connector) | **no - untested against a live site** |
+| Sections 3.5-3.8, 6 (live Jira connector) | **yes - run against a live Jira Cloud site on 11 Nov 2026 with a read-only token (35 stories exported, report built)** |
 | `--live` model run | yes, 5 runs per prompt on the synthetic eval (2026-11-06); not on real data |
 | Section 7.3 (dry-run emails, refusal of drafts and edited files) | yes, run end to end on a clean checkout |
 | Section 7.4 real sending | **simulated server in unit tests only; not tested against a real mail server** |
