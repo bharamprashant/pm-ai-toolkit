@@ -48,3 +48,11 @@ def test_all_blocking_links_are_kept_by_the_jira_mapping():
     it = {"key": "A-9", "fields": {"summary": "s", "status": {"name": "To Do"}, "updated": "2026-11-01T00:00:00",
                                    "issuelinks": [link("A-1"), link("A-2")]}}
     assert to_rows([it])[0]["Blocked By"] == "A-1,A-2"
+
+
+def test_zero_issues_gives_a_clear_message_not_a_traceback(monkeypatch, tmp_path):
+    import pytest
+    from modules.m01_status_agent import jira_client
+    monkeypatch.setattr(jira_client, "fetch", lambda jql, limit=200: [])
+    with pytest.raises(SystemExit, match="0 issues"):
+        jira_client.export_csv("project = X", tmp_path / "o.csv")

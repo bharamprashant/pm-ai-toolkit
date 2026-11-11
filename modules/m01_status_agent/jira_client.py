@@ -69,6 +69,9 @@ def to_rows(issues: list[dict]) -> list[dict]:
 def export_csv(jql: str, out: str | Path) -> Path:
     import csv
     rows = to_rows(fetch(jql))
+    if not rows:
+        raise SystemExit("Jira returned 0 issues for this JQL. Check the project key, that this account can see "
+                         "the project, and the JQL itself (try it in Jira's issue search). Nothing was written.")
     out = Path(out)
     with out.open("w", newline="", encoding="utf-8") as fh:
         w = csv.DictWriter(fh, fieldnames=list(rows[0].keys()))
