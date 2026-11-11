@@ -10,6 +10,6 @@
 | Human decisions | Approving the report; deciding to send it (the publish command is run by a person); accepting any RED; escalation and recovery plans. The approver's name is self-declared, not authenticated; see docs/AI_GOVERNANCE.md |
 | Stop conditions | Model output fails `verify()` (invalid RAG, empty rationale, ticket key not in the data) - the rule baseline is used instead and flagged "fallback" |
 | Data handling | No credentials are sent to the model. With `--send`, the report goes to your mail server and Slack workspace, where everyone in the recipient list or channel can read it. With `--live`, workstream counts, ticket keys and open-item comment text are sent to the model provider (offline mode sends nothing). Tokens live only in environment variables. Use synthetic or approved data only |
-| Logging | Every draft (including which workstreams the verifier rejected) and every approval is appended to `audit.jsonl` with actor, time and a content fingerprint. The log is not tamper-proof; see docs/AI_GOVERNANCE.md |
+| Logging | Every draft (including which workstreams the verifier rejected) and every approval is appended to `audit.jsonl` with actor, time and a content fingerprint. Each line is hash-chained to the one before it (tamper-evident, not tamper-proof; see docs/AI_GOVERNANCE.md) |
 | Failure modes known | Cannot see anything outside the export; trusts comment text as written; small test set |
 | Review cadence | Re-run the eval after any prompt, threshold or model change |

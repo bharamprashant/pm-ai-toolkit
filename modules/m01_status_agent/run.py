@@ -11,7 +11,7 @@ import argparse
 from datetime import date
 from pathlib import Path
 
-from core.audit import AuditLog, approve, fingerprint
+from core.audit import AuditLog, approve, fingerprint, head_hash
 from core.llm import AnthropicLLM
 from modules.m01_status_agent import agent
 from modules.m01_status_agent.facts import compute_facts, load_issues
@@ -42,6 +42,7 @@ def main(argv=None):
     if a.approve:
         final = approve(a.approve, a.approver, log)
         print(f"approved -> {final}")
+        print(f"audit log head: {head_hash(log.path)}  (save a copy elsewhere to detect deleted lines later)")
         return 0
 
     if not (a.input and a.as_of):

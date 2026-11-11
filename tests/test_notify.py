@@ -446,3 +446,11 @@ def test_config_rejects_bad_reminder_settings(tmp_path):
     (tmp_path / "bad.json").write_text(json.dumps(bad))
     with pytest.raises(ValueError, match="reminders.after_hours"):
         notify.load_config(tmp_path / "bad.json")
+
+
+def test_missing_config_gives_a_clear_message_not_a_traceback(tmp_path, capsys):
+    from modules.m01_status_agent import notify
+    rc = notify.main(["publish", "--final", str(tmp_path / "x_FINAL.md"), "--config", str(tmp_path / "nope.json"),
+                      "--out", str(tmp_path)])
+    assert rc == 2
+    assert "CONFIG PROBLEM" in capsys.readouterr().err

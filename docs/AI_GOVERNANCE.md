@@ -19,7 +19,7 @@ any regulation or standard.
 | 3 | Safe fallback | A rejected answer is replaced by the rule baseline and flagged "(fallback)"; the model's text is never used | ENFORCED IN CODE | `agent.py` `assess()` |
 | 4 | Draft status | Every report starts as `STATUS: DRAFT - not approved` | ENFORCED IN CODE | `agent.py` `render()` |
 | 5 | Named approver | Approval fails with an empty or blank name; the final file is stamped with the approver and UTC time | ENFORCED IN CODE (name only, see 3.2) | `core/audit.py` `approve()` |
-| 6 | Audit log | Draft creation and approval are written as one JSON line each, with actor, UTC time and a content fingerprint | BY DESIGN (see 4.2) | `core/audit.py` |
+| 6 | Audit log | Draft creation and approval are written as one JSON line each, with actor, UTC time and a content fingerprint. Each line carries the hash of the previous line, so an edit or deletion is detected (`python3 -m core.audit verify`), and a report whose log fails the check is refused at publish time | ENFORCED IN CODE for detection; BY DESIGN for the limits in 4.2 | `core/audit.py` |
 | 7 | Read-only Jira access | The connector only issues GET requests and never writes to Jira | ENFORCED IN CODE (the token's real permissions are yours to limit) | `jira_client.py` |
 | 8 | No auto-publish | The agent never writes to a system of record and never approves its own report. A scheduled run stops at a draft and only emails the approver | ENFORCED IN CODE | whole module |
 | 8a | Approval-gated email | `notify publish` refuses a report that is a draft, has no approval record in the log, or was edited after approval (fingerprint check). Nothing is sent without `--send`; the default writes `.eml` files for inspection | ENFORCED IN CODE | `notify.py`, `core/audit.py` `verify_approved()` |
@@ -96,9 +96,12 @@ draft, why a human reads it, and why the evaluation exists. Live-model accuracy 
 ### 4.2 What is not recorded, and how strong the log is
 - **Not recorded:** the prompt text or version, the input data fingerprint, the rejection reason (it is in the report row,
   not the log), and who edited a draft.
-- **Not tamper-proof.** The log is a plain text file that the program only appends to. It is not signed and not
-  hash-chained, so a person with file access could edit or delete lines. Treat it as a useful record, not as evidence that
-  would survive an adversary. For stronger assurance, ship the log to write-once storage.
+- **Tamper-evident, not tamper-proof.** Each line stores the hash of the line before it. Editing or deleting an earlier
+  line breaks the chain and `python3 -m core.audit verify out/audit.jsonl` says where; `publish` refuses an approved report if
+  the log fails the check. Two gaps remain. A person who rewrites the whole file and recomputes every hash is not detected
+  (the log is not signed). And lines removed from the END are detected only if you saved the head hash somewhere else:
+  the approve commands print it, and `verify --head HASH` checks it. Logs written before chaining existed are tolerated at the
+  start of the file but are not protected. For stronger assurance, ship the log to write-once storage.
 - The fingerprint only helps if someone compares it. See 3.2.
 
 ## 5. Data handling
@@ -139,7 +142,7 @@ never changes dates, owners or priorities, and never writes to Jira or any syste
 | Email goes to the wrong person | Recipients come only from the validated config file | A mistake in the config file itself; review it before first use |
 | Recipient addresses (personal data) sit in files | Config and `out/` are git-ignored; the log stores recipient addresses | Protect the folder; do not commit it; delete the log per your retention rules |
 | Check-in emails sound like instructions from the AI | Sent in the approver's name as Reply-To; each says it comes from an approved report | Tone and need for a check-in are still the approver's call |
-| Log edited after the fact | Not prevented by the tool | Needs write-once storage |
+| Log edited after the fact | Detected by the hash chain; an approved report is refused if the log fails the check | Whole-file rewrite and removal of the last lines are not detected without a saved head hash; write-once storage closes both |
 | Confidential comments sent to a provider | `--live` is opt-in; offline mode is the default | Your approval and data checks |
 | Prompt or threshold changed and quality drops | Re-run the eval after every change | Relies on discipline; not automated |
 | Over-trust in a well-formatted report | Evidence tags, stated limits, "(fallback)" flag | Human factor |
@@ -154,7 +157,7 @@ This is a plain-language mapping for orientation. It is **not** an assessment ag
 | Transparency | Reasons cite tickets; the report states what is code and what is model; fallback is flagged | Prompt not logged |
 | Accountability | An owner and approver are named in the contract and log | Roles not enforced |
 | Accuracy and robustness | Verifier, fallback, labelled evaluation | Only synthetic data; live model tied the rules; its first prompt under-called RED weeks and a stricter one over-called slow-drift weeks |
-| Record-keeping | Append-only style log with fingerprints | Not tamper-proof |
+| Record-keeping | Hash-chained log with fingerprints | Tamper-evident, not tamper-proof (unsigned; see 4.2) |
 | Data protection | Offline default; read-only access; credentials never sent to the model | Comment text goes to the model in live mode |
 
 Mapping the controls to the PMI AI standard and the EU AI Act in detail is a planned task (see the Jira plan for module 07),
@@ -176,7 +179,7 @@ Mapping the controls to the PMI AI standard and the EU AI Act in detail is a pla
 
 ## 10. Governance improvements planned
 
-None of these exist yet: hash-chained audit log; approver identity through pull-request review; per-RED acceptance;
+None of these exist yet: signing the audit log or write-once storage (the hash chain detects edits but is not signed); approver identity through pull-request review; per-RED acceptance;
 automatic draft-versus-approval fingerprint check; logging the prompt version, input fingerprint and rejection reasons;
 a written mapping to the PMI AI standard and the EU AI Act. Module 07 (the multi-agent orchestrator) adds a reviewer agent
 and a permission check on which tools each agent may call.

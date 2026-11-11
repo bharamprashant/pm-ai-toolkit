@@ -1,5 +1,7 @@
 # PM AI Toolkit
 
+[![ci](https://github.com/bharamprashant/pm-ai-toolkit/actions/workflows/ci.yml/badge.svg)](https://github.com/bharamprashant/pm-ai-toolkit/actions/workflows/ci.yml) ![licence MIT](https://img.shields.io/badge/licence-MIT-blue)
+
 > AI agents, LLM evaluation, guardrails and human-in-the-loop governance for **program managers, project managers and PMOs** - with Jira integration, an audit log and a reproducible eval. Synthetic data only.
 
 **Keywords:** AI for project management, agentic PMO, AI program manager, Jira AI agent, LLM evaluation, AI guardrails, AI governance, human-in-the-loop, status report automation, RAG status.
@@ -11,6 +13,38 @@ that it exists: you can read the code, run it, break it, and measure it.
 **Governance:** how the toolkit checks the AI, who must approve, what is enforced in code versus policy, and the known gaps are in [docs/AI_GOVERNANCE.md](docs/AI_GOVERNANCE.md).
 
 **New here?** Read [docs/WHAT_IS_THIS.md](docs/WHAT_IS_THIS.md): what the project and this repository are, a worked example from the sample data, who it is best for, and what it does not do.
+
+## See it in 30 seconds
+
+Real output on the fictional sample program (no accounts, no key). A program's tickets go in; a **draft** report comes out; nothing counts until a named person approves it, and the log catches tampering.
+
+```text
+$ python3 -m modules.m01_status_agent.run --input data/synthetic/snapshots/2026-03-20.csv --as-of 2026-03-20
+STATUS: DRAFT - not approved
+| Workstream   | RAG   | Done | Overdue | Blocked | Stale | Why                                                         |
+| Collections  | AMBER | 3/8  | 1       | 0       | 0     | Rule check: some overdue, blocked or stale items. (NW-135)  |
+| Data-Sharing | AMBER | 3/8  | 0       | 0       | 3     | Rule check: some overdue, blocked or stale items. (NW-123, NW-124, NW-125) |
+| Payments     | GREEN | 3/8  | 0       | 0       | 0     | Rule check: no overdue, blocked or stale items. (no keys)   |
+
+$ python3 -m modules.m01_status_agent.run --approve out/status_2026-03-20_DRAFT.md --approver "Pat Approver"
+approved -> out/status_2026-03-20_FINAL.md
+
+$ python3 -m core.audit verify out/audit.jsonl                 # later, someone edits a line of the log
+FAILED: audit log chain broken at line 2: an earlier line was edited or removed
+$ python3 -m modules.m01_status_agent.notify publish --final out/status_2026-03-20_FINAL.md
+REFUSED: the audit log failed its integrity check: audit log chain broken at line 2: an earlier line was edited or removed
+```
+(Table shortened to three of six rows; the rest is as printed by the command.)
+
+**What was measured, and the honest reading** (24 and 29 hand-labelled cases, synthetic data):
+
+| | Rule baseline | Live model (`claude-sonnet-5-5`) |
+|---|---|---|
+| Module 01, RAG accuracy | 87.5% | 87.5%, identical in 5 runs per prompt: it reads comments the rules cannot, but its mistakes are different, not fewer |
+| Module 02, actions found | 31% (only `Action:` lines) | not run yet |
+| Answers citing something that does not exist | 0 | 0 (checker never had to reject one) |
+
+The point of the project is the method: code counts, the model judges, a checker rejects ungrounded answers, a named person approves, and every step is logged. Full details below and in [docs/WHAT_IS_THIS.md](docs/WHAT_IS_THIS.md).
 
 ## What problem does it solve?
 
@@ -30,6 +64,7 @@ ticket export -> code computes facts -> model (or rules) judges -> verifier chec
 |---|---|
 | **Code counts, the model judges** | Counts, dates and lists are computed deterministically. The model never does arithmetic |
 | **Verify before you trust** | Any answer that cites a ticket not in the data, or gives an invalid RAG, is rejected and replaced by the rule baseline, marked "(fallback)" |
+| **Tamper-evident log** | Every log line carries the hash of the line before it, so an edited or deleted line is detected, and an approved report is refused if the log fails the check (a saved copy of the head hash is needed to catch deleted last lines) |
 | **Drafts, not decisions** | A report stays `STATUS: DRAFT` until a named person approves it. An empty name is refused |
 | **Measure honestly** | Every number is tagged measured, modeled or hypothetical, with its limits stated |
 | **Synthetic data only** | Nothing here comes from a real employer or customer |
@@ -77,7 +112,7 @@ No coding needed: [docs/FOR_NON_TECHNICAL_USERS.md](docs/FOR_NON_TECHNICAL_USERS
 git clone https://github.com/bharamprashant/pm-ai-toolkit
 cd pm-ai-toolkit
 python3 -m pip install pytest
-python3 -m pytest -q                                   # expect: 85 passed
+python3 -m pytest -q                                   # expect: 95 passed
 python3 -m modules.m01_status_agent.run --input data/synthetic/snapshots/2026-03-20.csv --as-of 2026-03-20
 python3 -m modules.m01_status_agent.eval.run_eval      # expect: RAG accuracy 87.5%
 ```
@@ -118,7 +153,7 @@ data/          synthetic Jira-shaped data generator (seeded, reproducible), snap
 modules/       one folder per module: code, README, SETUP.md, AGENT_CONTRACT.md, eval
 governance/    reusable agent-contract template
 docs/          getting started, how it works, setup standard, idea backlog
-tests/         85 automated tests (run in CI on every push)
+tests/         95 automated tests (run in CI on every push)
 ```
 
 ## Safety

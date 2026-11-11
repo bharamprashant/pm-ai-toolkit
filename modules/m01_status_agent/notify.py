@@ -474,7 +474,11 @@ def main(argv=None) -> int:
     a = p.parse_args(argv)
     out = Path(a.out)
     log = AuditLog(out / "audit.jsonl")
-    cfg = load_config(a.config)
+    try:
+        cfg = load_config(a.config)
+    except (FileNotFoundError, ValueError) as exc:
+        print(f"CONFIG PROBLEM: {exc}", file=sys.stderr)
+        return 2
     if a.cmd == "remind":
         return _remind(a, cfg, log, out)
     sender = os.environ.get("SMTP_FROM") or "pm-ai-toolkit@example.invalid"

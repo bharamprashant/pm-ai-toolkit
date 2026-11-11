@@ -9,7 +9,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from core.audit import AuditLog, approve, fingerprint
+from core.audit import AuditLog, approve, fingerprint, head_hash
 from core.llm import AnthropicLLM
 from modules.m02_meeting_actions import agent
 from modules.m02_meeting_actions.facts import parse_meeting
@@ -27,6 +27,7 @@ def main(argv=None):
     log = AuditLog(out / "audit.jsonl")
     if a.approve:
         print(f"approved -> {approve(a.approve, a.approver, log)}")
+        print(f"audit log head: {head_hash(log.path)}  (save a copy elsewhere to detect deleted lines later)")
         return 0
     if not a.notes:
         p.error("--notes is required")

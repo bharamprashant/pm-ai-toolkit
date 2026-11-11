@@ -53,7 +53,7 @@ FINAL report      every step appended to out/audit.jsonl with actor, time, conte
 | Rule baseline as the fallback | `agent.py` `baseline()` | If the model fails the verifier or is unavailable, you still get a safe, explainable answer, and it is marked |
 | Swappable model interface | `core/llm.py` (`LLM` protocol, `OfflineBaseline`, `AnthropicLLM`) | The same pipeline runs offline for tests and with a live model in production. Other providers can be added without touching the agent |
 | Draft then approval | `core/audit.py` `approve()` | A report is never final until a named person signs it. This is the human-in-the-loop control |
-| Append-only audit log | `core/audit.py` | You can later answer "who approved this, when?" and, by comparing fingerprints, whether the draft changed. The log is append-only by design but is a plain file, not tamper-proof; see [AI_GOVERNANCE.md](AI_GOVERNANCE.md) |
+| Append-only audit log | `core/audit.py` | You can later answer "who approved this, when?" and, by comparing fingerprints, whether the draft changed. Each line is chained to the one before it, so edits and deletions are detected, but it is a plain unsigned file, not tamper-proof; see [AI_GOVERNANCE.md](AI_GOVERNANCE.md) |
 | Labelled evaluation set | `data/synthetic`, `eval/run_eval.py`, `core/evalkit.py` | You get measured accuracy and a confusion matrix, so a prompt or model change can be judged on evidence, not feel |
 | Evidence tags on every claim | README results table | Readers can tell a measured number from a modelled one from a hypothesis |
 | Agent contract | `AGENT_CONTRACT.md` | States what the agent may and may not do, who owns it, and when it must stop. Maps to AI-governance expectations |
