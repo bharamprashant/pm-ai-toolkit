@@ -80,14 +80,14 @@ Full explanation, design choices and limits: [docs/HOW_IT_WORKS.md](docs/HOW_IT_
 - **Email and Slack the right people after approval:** a short exec view for sponsors, a full view for the delivery lead, a Slack post for the stakeholder channel, and a check-in to the owner of every Red or Amber workstream. It refuses to send anything unapproved or edited after approval, and sends nothing unless you pass `--send` (the default writes `.eml` and Slack `.json` files to inspect).
 - **Chase an unapproved draft:** a reminder to the approver after 2 hours and an escalation (headline only, no report content) to a line manager after 4, each sent once.
 - Score the agent against 24 labelled workstream-weeks and see a confusion matrix, the misses, and the grounding rate.
-- Point it at your own Jira Cloud site through a read-only connector (not yet run against a live site, see status below).
+- Point it at your own Jira Cloud site through a read-only connector (run against a live site on 11 Nov 2026, see status below).
 - Reuse the agent contract and setup standard for any other AI helper your PMO introduces.
 
 ## Modules
 
 | Module | Status |
 |---|---|
-| [01 Status & executive report agent](modules/m01_status_agent/README.md) | built, with scheduling and approval-gated email; offline baseline and live-model runs measured; run once on a real Jira board through a read-only connector (found and fixed three misleading-report bugs); the repo's own Jira token client, a real mail server and a real scheduler **not yet run** |
+| [01 Status & executive report agent](modules/m01_status_agent/README.md) | built, with scheduling and approval-gated email; offline baseline and live-model runs measured; run on a real Jira board twice (read-only connector, then the repo's own token client on 11 Nov 2026: 35 stories exported and reported; the first run found and fixed three misleading-report bugs); a real mail server and a real scheduler **not yet run** |
 | [02 Meeting-to-action pipeline](modules/m02_meeting_actions/README.md) | built; offline baseline measured (31% recall: it reads only `Action:` lines); live model not run |
 | 03 Risk & RAID intelligence | planned |
 | 04 Backlog refinement assistant | planned |
@@ -142,7 +142,7 @@ Reproduced by `python3 -m modules.m01_status_agent.eval.run_eval` on 24 labelled
 **Read before trusting:** the data is synthetic and the labels are the author's design intent; 24 cases is small; two
 scenario types are deliberately written so the signal sits in comments (a stress test the rule baseline is expected to
 miss); the first run scored 66.7% because of a data-generator bug that was fixed and disclosed, with thresholds
-untouched; the live model was run 5 times per prompt and tied the rules (87.5%; v1 under-calls RED, v2 over-calls it); the agent was run once on a real Jira board (connector, read-only, 11 Nov), which exposed and fixed three report bugs; the token/HTTP client `jira_client.py` has not been run against live Jira. Details in
+untouched; the live model was run 5 times per prompt and tied the rules (87.5%; v1 under-calls RED, v2 over-calls it); the agent was run once on a real Jira board (connector, read-only, 11 Nov), which exposed and fixed three report bugs; the token/HTTP client `jira_client.py` was then run against live Jira with a read-only token (35 stories exported). Details in
 [docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md#5-what-it-measured-and-what-that-does-and-does-not-prove).
 
 ## Repository map
