@@ -50,9 +50,9 @@ def to_rows(issues: list[dict]) -> list[dict]:
         f = it["fields"]
         comments = (f.get("comment") or {}).get("comments", [])
         last = _adf_text(comments[-1]["body"]).strip() if comments else ""
-        blocked = next(
-            (l["inwardIssue"]["key"] for l in f.get("issuelinks", [])
-             if l.get("type", {}).get("inward") == "is blocked by" and "inwardIssue" in l), "")
+        blocked = ",".join(
+            l["inwardIssue"]["key"] for l in f.get("issuelinks", [])
+            if l.get("type", {}).get("inward") == "is blocked by" and "inwardIssue" in l)
         comps = f.get("components") or []
         rows.append({
             "Key": it["key"], "Summary": f["summary"], "Status": f["status"]["name"],
