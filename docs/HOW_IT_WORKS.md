@@ -140,7 +140,7 @@ approved dataset.
 
 - It sees only the export. It does not know about a conversation that never reached a ticket.
 - It trusts comment text as written.
-- The live model was run once on the synthetic set (see above). The Jira connector has **not** been run against a real site yet.
+- The live model was run once on the synthetic set (see above). The Jira client was run against a real site with a read-only token on 11 Nov 2026. Module 02's live model scored 100% on its small synthetic set (3 runs), which is not held-out evidence.
 - It is a decision aid. It does not replace the program manager's judgment, and a RED needs a human decision.
 - Do not feed it confidential data unless your organisation has approved this use of an external model.
 

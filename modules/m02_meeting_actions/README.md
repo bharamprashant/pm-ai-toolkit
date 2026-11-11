@@ -56,11 +56,11 @@ The draft is written to `out/actions_<date>_DRAFT.md`. Two meetings on the same 
 | Due date correct, of those found | 88.9% (8/9) | 🟢 measured |
 | All correct end to end, of all 29 | 27.6% | 🟢 measured |
 | Recall on `Action:` lines / on ordinary prose | 100% / 0% | 🟢 measured |
-| Live model | not run yet | 🔴 hypothetical |
+| Live model (claude-sonnet-5-5, 3 runs, 8 meetings, 29 actions) | recall 100%, precision 100%, all correct 100%, grounding 100% (identical in all 3 runs) | 🟢 measured, but see caveat |
 
 **Read before trusting.** The baseline only reads lines that start with `Action:`, so it finds every templated action and none of the commitments written as ordinary
 sentences. That is the gap a model is meant to close, and it is deliberately wide: this is a stress test, not a typical meeting. The baseline also misses one date ("next Friday"
-with no preposition). The data is synthetic and small (29 actions, one action is 3.4 points); the live model has not been run.
+with no preposition). The data is synthetic and small (29 actions, one action is 3.4 points); the live model scored 100% on every run, which on a set this small (and written by the same author as the prompt, never held out) shows it handles these patterns, not that it will on real meetings. Held-out cases are tracked as AGPMO-41.
 Real meetings are messier: speaker names, interruptions, two people on one action, deadlines stated across several sentences. None of that is covered.
 
 **Not built, on purpose.** This module never writes to Jira, email or a calendar. Creating tickets from approved actions is a planned step that would need its own approval gate and dry run.

@@ -56,6 +56,6 @@ Not built. A fixed-time run does not fit this module, because a person has to su
 | Step | Run for real? |
 |---|---|
 | Sections 3 and 5 (tests, dry run, approval, eval) | yes, on the repo as committed |
-| `--live` model run | **no - not run yet** |
+| `--live` model run | **yes - 11 Nov 2026, `run_eval --live --runs 3`: 100% recall, precision, all-correct, grounding on the synthetic set** |
 | Real meeting notes | **no - synthetic data only** |
 | Section 7 | not built |

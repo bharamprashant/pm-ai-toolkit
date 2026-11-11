@@ -41,7 +41,7 @@ REFUSED: the audit log failed its integrity check: audit log chain broken at lin
 | | Rule baseline | Live model (`claude-sonnet-5-5`) |
 |---|---|---|
 | Module 01, RAG accuracy | 87.5% | 87.5%, identical in 5 runs per prompt: it reads comments the rules cannot, but its mistakes are different, not fewer |
-| Module 02, actions found | 31% (only `Action:` lines) | not run yet |
+| Module 02, actions found | 31% (only `Action:` lines) | 100% (3 runs, claude-sonnet-5-5; small synthetic set, see caveats) |
 | Answers citing something that does not exist | 0 | 0 (checker never had to reject one) |
 
 The point of the project is the method: code counts, the model judges, a checker rejects ungrounded answers, a named person approves, and every step is logged. Full details below and in [docs/WHAT_IS_THIS.md](docs/WHAT_IS_THIS.md).
@@ -88,7 +88,7 @@ Full explanation, design choices and limits: [docs/HOW_IT_WORKS.md](docs/HOW_IT_
 | Module | Status |
 |---|---|
 | [01 Status & executive report agent](modules/m01_status_agent/README.md) | built, with scheduling and approval-gated email; offline baseline and live-model runs measured; run on a real Jira board twice (read-only connector, then the repo's own token client on 11 Nov 2026: 35 stories exported and reported; the first run found and fixed three misleading-report bugs); a real mail server and a real scheduler **not yet run** |
-| [02 Meeting-to-action pipeline](modules/m02_meeting_actions/README.md) | built; offline baseline measured (31% recall: it reads only `Action:` lines); live model not run |
+| [02 Meeting-to-action pipeline](modules/m02_meeting_actions/README.md) | built; offline baseline 31% recall (reads only `Action:` lines); live model 100% recall, precision and end-to-end correctness on 3 runs of the 29 synthetic actions (small, not held-out) |
 | 03 Risk & RAID intelligence | planned |
 | 04 Backlog refinement assistant | planned |
 | 05 Audit evidence & control mapping | planned |
