@@ -74,4 +74,4 @@ Real meetings are messier: speaker names, interruptions, two people on one actio
 to tune it: speaker-prefixed lines, bullet lists, passive voice, hedges, and traps (past tense, "will be on leave", "after the call with
 legal"). Same author as the first set and the prompt (Claude), so it is held out from the prompt, **not independent**. Writing it found one
 real bug in the date code ("by the end of next week" was not understood), now fixed. The offline baseline scores 0% recall on it (no
-`Action:` lines). The live-model numbers on this set: **not run yet** (needs your own key).
+`Action:` lines). Live model (claude-sonnet-5-5, 3 runs, 11 Nov 2026): recall, precision, all-correct and grounding all **100%** in every run. The traps (past tense, "will be on leave", "after the call with legal") were not reported as actions and the unresolvable date stayed empty. Two sets of fictional notes written by one author still say little about real meetings: transcripts with interruptions, two owners on one action, or deadlines spread over several sentences are untested.
