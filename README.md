@@ -87,7 +87,7 @@ Full explanation, design choices and limits: [docs/HOW_IT_WORKS.md](docs/HOW_IT_
 
 | Module | Status |
 |---|---|
-| [01 Status & executive report agent](modules/m01_status_agent/README.md) | built, with scheduling and approval-gated email; offline baseline and live-model runs measured; run on a real Jira board twice (read-only connector, then the repo's own token client on 11 Nov 2026: 35 stories exported and reported; the first run found and fixed three misleading-report bugs); a real mail server and a real scheduler **not yet run** |
+| [01 Status & executive report agent](modules/m01_status_agent/README.md) | built, with scheduling and approval-gated email; offline baseline and live-model runs measured; run on a real Jira board twice (read-only connector, then the repo's own token client on 11 Nov 2026: 35 stories exported and reported; the first run found and fixed three misleading-report bugs); email verified on the wire against a local stand-in SMTP server with TLS (scheduled script, approval gate, publish); a real mail provider, a real Slack workspace and a real clock-triggered schedule **not yet run** |
 | [02 Meeting-to-action pipeline](modules/m02_meeting_actions/README.md) | built; offline baseline 31% recall (reads only `Action:` lines); live model 100% recall, precision and end-to-end correctness on 3 runs of the 29 synthetic actions (small, not held-out) |
 | 03 Risk & RAID intelligence | planned |
 | 04 Backlog refinement assistant | planned |

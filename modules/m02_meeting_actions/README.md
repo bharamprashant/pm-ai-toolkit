@@ -67,3 +67,11 @@ Real meetings are messier: speaker names, interruptions, two people on one actio
 
 ## Files
 `facts.py` date rules and parsing, `agent.py` prompt, checker and draft, `run.py` CLI, `eval/run_eval.py`, `SETUP.md`, `AGENT_CONTRACT.md`. Tests: `tests/test_m02.py`.
+
+## Second set (held out): 6 meetings, 18 actions, harder styles
+
+`python3 -m modules.m02_meeting_actions.eval.run_eval --set heldout [--live --runs 3]`. Written after the prompt was frozen and never used
+to tune it: speaker-prefixed lines, bullet lists, passive voice, hedges, and traps (past tense, "will be on leave", "after the call with
+legal"). Same author as the first set and the prompt (Claude), so it is held out from the prompt, **not independent**. Writing it found one
+real bug in the date code ("by the end of next week" was not understood), now fixed. The offline baseline scores 0% recall on it (no
+`Action:` lines). The live-model numbers on this set: **not run yet** (needs your own key).

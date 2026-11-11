@@ -244,7 +244,7 @@ A correct run prints six workstreams, shows no "(fallback)" marks unless the mod
 | Sections 3.5-3.8, 6 (live Jira connector) | **yes - run against a live Jira Cloud site on 11 Nov 2026 with a read-only token (35 stories exported, report built)** |
 | `--live` model run | yes, 5 runs per prompt on the synthetic eval (2026-11-06); not on real data |
 | Section 7.3 (dry-run emails, refusal of drafts and edited files) | yes, run end to end on a clean checkout |
-| Section 7.4 real sending | **simulated server in unit tests only; not tested against a real mail server** |
+| Section 7.4 real sending | **tested on the wire against a local stand-in SMTP server with STARTTLS and certificate checking on (`tests/test_smtp_wire.py`); not tested against a real provider such as Gmail or Office 365** |
 | Section 7.6 Slack payloads, escaping, webhook checks, dry run | yes (unit tests and an end-to-end dry run) |
 | Section 7.6 posting to a real Slack workspace | **no - simulated HTTP call in unit tests only** |
 | Section 7.7 reminder levels, de-duplication, escalation privacy (unit tests and a simulated-clock dry run) | yes |

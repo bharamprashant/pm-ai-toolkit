@@ -8,9 +8,10 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install pytest
+      - run: pip install pytest aiosmtpd
       - run: python data/synthetic/generate.py
       - run: python data/synthetic/meetings.py
       - run: python -m pytest -q
       - run: python -m modules.m01_status_agent.eval.run_eval
       - run: python -m modules.m02_meeting_actions.eval.run_eval
+      - run: python -m modules.m02_meeting_actions.eval.run_eval --set heldout
